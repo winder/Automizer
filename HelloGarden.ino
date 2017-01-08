@@ -4,12 +4,33 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include "ThingSpeak.h"
+#include <BlynkSimpleEsp8266.h>
 
+// Upload globals
+#define UPLOAD_INTERVAL_MINUTES 1
+unsigned long previousUploadMillis = 0;
+const long uploadInterval = 1000 * 60 * UPLOAD_INTERVAL_MINUTES;
+
+// Thingspeak globals
+int failedCounter = 0;
+const unsigned long myChannelNumber =  123456; // YOUR THINGSPEAK CHANNEL
+const String writeAPIKey = "THINGSPEAK-KEY";
+
+// Blynk globals
+// You should get Auth Token in the Blynk App.
+// Go to the Project Settings (nut icon).
+char blynkKey[] = "BLYNK-KEY";
+#define BLYNK_PRINT Serial    // Comment this out to disable prints and save space
+
+// wifi globals
 const char* ssid = "YOUR-WIFI-SSID";
 const char* password = "YOUR-WIFI-PASSWORD";
-
 ESP8266WebServer server(80);
 
+// DHT globals
+unsigned long previousMillis = 0;        // will store last temp was read
+const long interval = 2000;              // interval at which to read sensor
 #define DHTTYPE DHT11
 #define DHTPIN  D1
 #define LEDPIN LED_BUILTIN
@@ -22,23 +43,30 @@ ESP8266WebServer server(80);
 // Arduino Due that runs at 84mhz a value of 30 works.
 // This is for the ESP8266 processor on ESP-01 
 DHT dht(DHTPIN, DHTTYPE, 16); // 11 works fine for ESP8266
+// Generally, you should use "unsigned long" for variables that hold time
+
 
 struct dht_data {
+  bool failed;
   float temp_f;
   float humidity;
 };
 
-// Generally, you should use "unsigned long" for variables that hold time
-unsigned long previousMillis = 0;        // will store last temp was read
-const long interval = 2000;              // interval at which to read sensor
-
-
 void handleRoot() {
   digitalWrite(LEDPIN, 1);
-  Serial.println("gettemperature()");
+  Serial.println("getTemperature()");
 
   server.send(200, "text/plain", "hello from esp8266!!!!");
   digitalWrite(LEDPIN, 0);
+}
+
+void handleSensor() {
+  dht_data data = getTemperature();       // read sensor
+  
+  String webString="Temperature: "+String(data.temp_f, 2)+" F";   // Arduino has a hard time with float to string
+  webString += "\nHumidity: "+String(data.humidity, 2)+"%";
+
+  server.send(200, "text/plain", webString);            // send to someones browser when asked
 }
 
 void handleNotFound(){
@@ -58,6 +86,7 @@ void handleNotFound(){
   digitalWrite(LEDPIN, 0);
 }
 
+// Setup server.
 void setup(void){
   pinMode(LEDPIN, OUTPUT);
   digitalWrite(LEDPIN, 0);
@@ -75,41 +104,32 @@ void setup(void){
   Serial.println(ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-  digitalWrite(LEDPIN, LOW);
   if (MDNS.begin("esp8266")) {
     Serial.println("MDNS responder started");
   }
 
+  // pages
   server.on("/", handleRoot);
-
-  server.on("/inline", [](){
-    server.send(200, "text/plain", "this works as well");
-  });
-
-  server.on("/dht", [](){  // if you add this subdirectory to your webserver call, you get text below :)
-    dht_data data = gettemperature();       // read sensor
-    
-    String webString="Temperature: "+String(data.temp_f, 2)+" F";   // Arduino has a hard time with float to string
-    webString += "\nHumidity: "+String(data.humidity, 2)+"%";
-
-    server.send(200, "text/plain", webString);            // send to someones browser when asked
-  });
-
+  server.on("/dht", handleSensor);
   server.onNotFound(handleNotFound);
 
   server.begin();
   Serial.println("HTTP server started");
+
+  digitalWrite(LEDPIN, LOW);
 }
 
+// Main loop.
+// Check for client connections and upload data on an interval.
 void loop(void){
   server.handleClient();
-  
+  uploadData();
 }
 
 dht_data cache;
-dht_data gettemperature() {  
+dht_data getTemperature() {  
   Serial.println("gettemperature()");
-
+  cache.failed = false;
   // Wait at least 2 seconds seconds between measurements.
   // if the difference between the current time and last time you read
   // the sensor is bigger than the interval you set, read the sensor
@@ -128,7 +148,141 @@ dht_data gettemperature() {
     // Check if any reads failed and exit early (to try again).
     if (isnan(cache.humidity) || isnan(cache.temp_f)) {
       Serial.println("Failed to read from DHT sensor!");
+      cache.failed = true;
     }
   }
   return cache;
 }
+
+// Send data via dweet.io
+void sendDweet(String t, String h) {
+  String data = "temperature=" + h + "&humidity=" + t;
+  sendDweet(data);
+}
+
+void sendDweet(String data) {
+  String host = "dweet.io";
+  Serial.println("Connecting to " + host);
+  
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  if (!client.connect(host.c_str(), 80)) {
+    Serial.println("connection failed");
+    return;
+  }
+
+  // This will send the request to the server
+  client.print(String("GET /dweet/for/DWEET-THING?") + data +
+             " HTTP/1.1\r\n" +
+             "Host: " + host + "\r\n" + 
+             "Connection: close\r\n\r\n");
+  delay(10);
+
+  // Read all the lines of the reply from server and print them to Serial
+  while(client.available()){
+    String line = client.readStringUntil('\r');
+    Serial.print(line);
+  }
+
+  Serial.println();
+  Serial.println("closing connection");
+}
+
+// Send data via thingspeak
+void sendThingspeak(String t, String h) {
+  String params = "field1="+t+"&field2="+h;
+  sendThingspeak(params);
+}
+
+// Send generic parameter data to thingspeak.
+void sendThingspeak(String tsData) {
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  if (!client.connect("api.thingspeak.com", 80)) {
+    failedCounter++;
+    Serial.println("Connection to ThingSpeak Failed ("+String(failedCounter, DEC)+")");
+    Serial.println();
+    return;
+  }
+    
+  client.print("POST /update HTTP/1.1\n");
+  client.print("Host: api.thingspeak.com\n");
+  client.print("Connection: close\n");
+  client.print("X-THINGSPEAKAPIKEY: "+writeAPIKey+"\n");
+  client.print("Content-Type: application/x-www-form-urlencoded\n");
+  client.print("Content-Length: ");
+  client.print(tsData.length());
+  client.print("\n\n");
+  client.print(tsData);
+  if (client.connected()) {
+    Serial.println("Connecting to ThingSpeak...");
+    Serial.println();
+    failedCounter = 0;
+  }
+  else {
+    failedCounter++;
+    Serial.println("Connection to ThingSpeak failed ("+String(failedCounter, DEC)+")");
+    Serial.println();
+  }
+
+  delay(10);
+
+  // Read all the lines of the reply from server and print them to Serial
+  while(client.available()){
+    String line = client.readStringUntil('\r');
+    Serial.print(line);
+  }
+}
+
+// Send data via blynk.cc
+void sendBylnk(String t, String h) {
+  if(!Blynk.connected()){
+    Blynk.config(blynkKey);
+    Serial.println("Not connected to Blynk server, reconnecting"); 
+    Blynk.connect(3333);  // timeout set to 10 seconds and then continue without Blynk
+    while (Blynk.connect() == false) {
+      // Wait until connected
+    }
+  }
+
+  if (!Blynk.connected()) {
+    Serial.println("Failed to reconnect to blynk, aborting.");
+    return;
+  }
+
+  Serial.println("Writing to blynk...");
+  Blynk.virtualWrite(V1, t);
+  Blynk.virtualWrite(V2, h);
+
+  Serial.println("Done with blynk...");
+  Blynk.disconnect();
+}
+
+void uploadData() {
+  unsigned long currentMillis = millis();
+ 
+  if(currentMillis - previousUploadMillis >= uploadInterval) {
+
+    dht_data data = getTemperature();
+    if (data.failed) {
+      Serial.println("Skipping data upload... no good data.");
+    }
+
+    // Got a good reading, reset the previous upload time.
+    previousUploadMillis = currentMillis;
+
+    String t = String(data.temp_f, 2);
+    String h = String(data.humidity, 2);
+
+    // Upload all the data.
+    
+    //sendDweet(t, h);
+    
+    sendThingspeak(t, h);
+ 
+    //sendBylnk(t, h);
+    
+    Serial.println("==========================");
+  }
+}
+
