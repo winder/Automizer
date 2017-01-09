@@ -23,6 +23,9 @@ const String writeAPIKey = "THINGSPEAK-KEY";
 char blynkKey[] = "BLYNK-KEY";
 #define BLYNK_PRINT Serial    // Comment this out to disable prints and save space
 
+// pushinbox globals
+String pushinBoxDevid = "PUSHINGBOX-KEY";
+
 // wifi globals
 const char* ssid = "YOUR-WIFI-SSID";
 const char* password = "YOUR-WIFI-PASSWORD";
@@ -54,8 +57,6 @@ struct dht_data {
 
 void handleRoot() {
   digitalWrite(LEDPIN, 1);
-  Serial.println("getTemperature()");
-
   server.send(200, "text/plain", "hello from esp8266!!!!");
   digitalWrite(LEDPIN, 0);
 }
@@ -128,7 +129,7 @@ void loop(void){
 
 dht_data cache;
 dht_data getTemperature() {  
-  Serial.println("gettemperature()");
+  Serial.println("getTemperature()");
   cache.failed = false;
   // Wait at least 2 seconds seconds between measurements.
   // if the difference between the current time and last time you read
@@ -186,6 +187,7 @@ void sendDweet(String data) {
 
   Serial.println();
   Serial.println("closing connection");
+  client.stop();
 }
 
 // Send data via thingspeak
@@ -232,6 +234,7 @@ void sendThingspeak(String tsData) {
     String line = client.readStringUntil('\r');
     Serial.print(line);
   }
+  client.stop();
 }
 
 // Send data via blynk.cc
@@ -258,31 +261,55 @@ void sendBylnk(String t, String h) {
   Blynk.disconnect();
 }
 
+void sendPushingBox(String t, String h) {
+  String host = "api.pushingbox.com";
+  Serial.println("Connecting to " + host);
+
+  String url = "GET /pushingbox?devid=" + pushinBoxDevid +
+      "&temp=" + t +
+      "&humidity=" + h;
+      
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  if (!client.connect(host.c_str(), 80)) {
+    Serial.println("connection failed");
+    return;
+  }
+
+  // This will send the request to the server
+  client.print(url +
+             " HTTP/1.1\r\n" +
+             "Host: " + host + "\r\n" + 
+             "Connection: close\r\n\r\n");
+
+  client.stop();
+}
+
+
 void uploadData() {
   unsigned long currentMillis = millis();
  
   if(currentMillis - previousUploadMillis >= uploadInterval) {
 
     dht_data data = getTemperature();
-    if (data.failed) {
-      Serial.println("Skipping data upload... no good data.");
+    if (data.failed == false) {
+      Serial.println("Good data received, uploading.");  
+      // Got a good reading, reset the previous upload time.
+      previousUploadMillis = currentMillis;
+  
+      String t = String(data.temp_f, 2);
+      String h = String(data.humidity, 2);
+  
+      // Upload all the data.
+      
+      //sendDweet(t, h);
+      
+      //sendThingspeak(t, h);
+   
+      //sendBylnk(t, h);
+  
+      sendPushingBox(t, h);
     }
-
-    // Got a good reading, reset the previous upload time.
-    previousUploadMillis = currentMillis;
-
-    String t = String(data.temp_f, 2);
-    String h = String(data.humidity, 2);
-
-    // Upload all the data.
-    
-    //sendDweet(t, h);
-    
-    sendThingspeak(t, h);
- 
-    //sendBylnk(t, h);
-    
-    Serial.println("==========================");
   }
 }
 
