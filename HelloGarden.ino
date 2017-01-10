@@ -172,7 +172,7 @@ dht_data getTemperature() {
 
 // Send data via dweet.io
 void sendDweet(String t, String h) {
-  String data = "temperature=" + h + "&humidity=" + t;
+  String data = "temperature=" + t + "&humidity=" + h;
   sendDweet(data);
 }
 
