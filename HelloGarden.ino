@@ -7,6 +7,14 @@
 #include "ThingSpeak.h"
 #include <BlynkSimpleEsp8266.h>
 
+// Data structures
+struct dht_data {
+  int status;
+  boolean failed;
+  float temp_f;
+  float humidity;
+};
+
 // Upload globals
 #define UPLOAD_INTERVAL_MINUTES 1
 unsigned long previousUploadMillis = 0;
@@ -34,6 +42,7 @@ ESP8266WebServer server(80);
 // DHT globals
 unsigned long previousMillis = 0;        // will store last temp was read
 const long interval = 2000;              // interval at which to read sensor
+dht_data cache;
 #define DHTTYPE DHT11
 #define DHTPIN  D1
 #define LEDPIN LED_BUILTIN
@@ -49,12 +58,6 @@ DHT dht(DHTPIN, DHTTYPE, 16); // 11 works fine for ESP8266
 // Generally, you should use "unsigned long" for variables that hold time
 
 
-struct dht_data {
-  bool failed;
-  float temp_f;
-  float humidity;
-};
-
 void handleRoot() {
   digitalWrite(LEDPIN, 1);
   server.send(200, "text/plain", "hello from esp8266!!!!");
@@ -63,9 +66,13 @@ void handleRoot() {
 
 void handleSensor() {
   dht_data data = getTemperature();       // read sensor
-  
+
   String webString="Temperature: "+String(data.temp_f, 2)+" F";   // Arduino has a hard time with float to string
   webString += "\nHumidity: "+String(data.humidity, 2)+"%";
+
+  if (data.failed) {
+    webString = "Failed to read sensor data.";
+  }
 
   server.send(200, "text/plain", webString);            // send to someones browser when asked
 }
@@ -127,10 +134,14 @@ void loop(void){
   uploadData();
 }
 
-dht_data cache;
+void dumpTempCache() {
+  Serial.print("Failed: "); Serial.println(cache.failed);
+  Serial.print("Temperature: "); Serial.println(cache.temp_f);
+  Serial.print("Humidity: "); Serial.println(cache.humidity);
+  Serial.println("------------------");
+}
+
 dht_data getTemperature() {  
-  Serial.println("getTemperature()");
-  cache.failed = false;
   // Wait at least 2 seconds seconds between measurements.
   // if the difference between the current time and last time you read
   // the sensor is bigger than the interval you set, read the sensor
@@ -138,18 +149,22 @@ dht_data getTemperature() {
   unsigned long currentMillis = millis();
  
   if(currentMillis - previousMillis >= interval) {
+    Serial.println("Reading DHT sensor.");
+
+
     // save the last time you read the sensor 
-    previousMillis = currentMillis;   
- 
+    previousMillis = currentMillis;
+
+    cache.failed = false;
+    
     // Reading temperature for humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (it's a very slow sensor)
     cache.humidity = dht.readHumidity();          // Read humidity (percent)
     cache.temp_f = dht.readTemperature(true);     // Read temperature as Fahrenheit
-    Serial.println(String((int)cache.temp_f) + " F, " + String((int)cache.humidity) + " % humidity");
     // Check if any reads failed and exit early (to try again).
-    if (isnan(cache.humidity) || isnan(cache.temp_f)) {
+    cache.failed = isnan(cache.humidity) || isnan(cache.temp_f);
+    if (cache.failed) {
       Serial.println("Failed to read from DHT sensor!");
-      cache.failed = true;
     }
   }
   return cache;
@@ -285,15 +300,16 @@ void sendPushingBox(String t, String h) {
   client.stop();
 }
 
-
 void uploadData() {
   unsigned long currentMillis = millis();
  
   if(currentMillis - previousUploadMillis >= uploadInterval) {
 
     dht_data data = getTemperature();
-    if (data.failed == false) {
-      Serial.println("Good data received, uploading.");  
+    if (!data.failed) {
+      Serial.println("Good data received, uploading.");
+      dumpTempCache();
+      
       // Got a good reading, reset the previous upload time.
       previousUploadMillis = currentMillis;
   
@@ -302,11 +318,11 @@ void uploadData() {
   
       // Upload all the data.
       
-      //sendDweet(t, h);
+      sendDweet(t, h);
       
-      //sendThingspeak(t, h);
+      sendThingspeak(t, h);
    
-      //sendBylnk(t, h);
+      sendBylnk(t, h);
   
       sendPushingBox(t, h);
     }
