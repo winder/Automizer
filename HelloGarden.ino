@@ -15,6 +15,11 @@ struct dht_data {
   float humidity;
 };
 
+// Pin globals
+#define RELAY_1 D5
+#define LEDPIN LED_BUILTIN
+#define DHTPIN  D1
+
 // Upload globals
 #define UPLOAD_INTERVAL_MINUTES 1
 unsigned long previousUploadMillis = 0;
@@ -44,8 +49,6 @@ unsigned long previousMillis = 0;        // will store last temp was read
 const long interval = 2000;              // interval at which to read sensor
 dht_data cache;
 #define DHTTYPE DHT11
-#define DHTPIN  D1
-#define LEDPIN LED_BUILTIN
 // Initialize DHT sensor 
 // NOTE: For working with a faster than ATmega328p 16 MHz Arduino chip, like an ESP8266,
 // you need to increase the threshold for cycle counts considered a 1 or 0.
@@ -57,24 +60,60 @@ dht_data cache;
 DHT dht(DHTPIN, DHTTYPE, 16); // 11 works fine for ESP8266
 // Generally, you should use "unsigned long" for variables that hold time
 
-
 void handleRoot() {
   digitalWrite(LEDPIN, 1);
   server.send(200, "text/plain", "hello from esp8266!!!!");
   digitalWrite(LEDPIN, 0);
 }
 
-void handleSensor() {
-  dht_data data = getTemperature();       // read sensor
+bool relay1 = 0;
+void handleToggleRelay1() {
+  relay1 = !relay1;
+  server.send(200, "text/plain", String("Relay 1 state: ") + relay1);
+  digitalWrite(RELAY_1, relay1);
+}
 
-  String webString="Temperature: "+String(data.temp_f, 2)+" F";   // Arduino has a hard time with float to string
+void handleGenericArgs() { //Handler
+  String message = "Number of args received:";
+  message += server.args();            //Get number of parameters
+  message += "\n";                            //Add a new line
+  
+  for (int i = 0; i < server.args(); i++) {
+    message += "Arg nº" + (String)i + " –> ";   //Include the current iteration value
+    message += server.argName(i) + ": ";     //Get the name of the parameter
+    message += server.arg(i) + "\n";              //Get the value of the parameter
+  } 
+  
+  server.send(200, "text/plain", message);       //Response to the HTTP request
+}
+
+void handleSpecificArg() { 
+  String message = "";
+  
+  if (server.arg("Temperature")== ""){     //Parameter not found
+    message = "Temperature Argument not found";
+  } else {     //Parameter found
+    message = "Temperature Argument = ";
+    message += server.arg("Temperature");     //Gets the value of the query parameter
+  }
+
+  server.send(200, "text/plain", message);
+}
+
+void handleSensor() {
+  // read sensor
+  dht_data data = getTemperature();
+
+  // Arduino has a hard time with float to string
+  String webString="Temperature: "+String(data.temp_f, 2)+" F";
   webString += "\nHumidity: "+String(data.humidity, 2)+"%";
 
   if (data.failed) {
     webString = "Failed to read sensor data.";
   }
 
-  server.send(200, "text/plain", webString);            // send to someones browser when asked
+  // send to someones browser when asked
+  server.send(200, "text/plain", webString);
 }
 
 void handleNotFound(){
@@ -97,6 +136,8 @@ void handleNotFound(){
 // Setup server.
 void setup(void){
   pinMode(LEDPIN, OUTPUT);
+  pinMode(RELAY_1, OUTPUT);
+
   digitalWrite(LEDPIN, 0);
   Serial.begin(115200);
   WiFi.begin(ssid, password);
@@ -119,6 +160,9 @@ void setup(void){
   // pages
   server.on("/", handleRoot);
   server.on("/dht", handleSensor);
+  server.on("/relay1", handleToggleRelay1);
+  server.on("/argTest1", handleGenericArgs);
+  server.on("/argTest2", handleSpecificArg);
   server.onNotFound(handleNotFound);
 
   server.begin();
@@ -315,8 +359,9 @@ void uploadData() {
   
       String t = String(data.temp_f, 2);
       String h = String(data.humidity, 2);
-  
-      // Upload all the data.
+
+      /*
+      // Upload the data.
       
       sendDweet(t, h);
       
@@ -325,6 +370,7 @@ void uploadData() {
       sendBylnk(t, h);
   
       sendPushingBox(t, h);
+      */
     }
   }
 }
