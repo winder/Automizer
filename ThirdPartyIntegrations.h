@@ -7,32 +7,19 @@
 
 class ThirdPartyIntegrations {
   public:
-    ThirdPartyIntegrations(ThirdPartyConfig config) :
-    /*
-      bool _useThingSpeak, unsigned long _thingSpeakChannel, String _thingSpeakKey,
-      bool _useBlynk, String _blynkKey,
-      bool _usePushingBox, String _pushnBoxKey,
-      bool _useDweet, String _dweetThing) :*/
-        useThingSpeak(config.useThingSpeak),
-        thingSpeakFailedCounter(0),
-        thingSpeakChannel(config.thingSpeakChannel),
-        thingSpeakKey(config.thingSpeakKey),
-        useBlynk(config.useBlynk),
-        blynkKey(config.blynkKey),
-        usePushingBox(config.usePushingBox),
-        pushingBoxKey(config.pushingBoxKey),
-        useDweet(config.useDweet),
-        dweetThing(config.dweetThing)
+    ThirdPartyIntegrations(ThirdPartyConfig& config) :
+        conf(config),
+        thingSpeakFailedCounter(0)
     {
     }
 
     void upload(String temperature, String humidity) {
       Serial.println("UPLOAD DATA");
 
-      if (useThingSpeak)  sendThingspeak(temperature, humidity);
-      if (useBlynk)       sendBlynk(temperature, humidity);
-      if (usePushingBox)  sendPushingBox(temperature, humidity);
-      if (useDweet)       sendDweet(temperature, humidity);
+      if (conf.useThingSpeak)  sendThingspeak(temperature, humidity);
+      if (conf.useBlynk)       sendBlynk(temperature, humidity);
+      if (conf.usePushingBox)  sendPushingBox(temperature, humidity);
+      if (conf.useDweet)       sendDweet(temperature, humidity);
     }
 
   private:
@@ -55,7 +42,7 @@ class ThirdPartyIntegrations {
     }
   
     // This will send the request to the server
-    client.print(String("GET /dweet/for/") + dweetThing + "?" + data +
+    client.print(String("GET /dweet/for/") + conf.dweetThing + "?" + data +
                " HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" + 
                "Connection: close\r\n\r\n");
@@ -92,7 +79,7 @@ class ThirdPartyIntegrations {
     client.print("POST /update HTTP/1.1\n");
     client.print("Host: api.thingspeak.com\n");
     client.print("Connection: close\n");
-    client.print("X-THINGSPEAKAPIKEY: "+thingSpeakKey+"\n");
+    client.print("X-THINGSPEAKAPIKEY: "+conf.thingSpeakKey+"\n");
     client.print("Content-Type: application/x-www-form-urlencoded\n");
     client.print("Content-Length: ");
     client.print(tsData.length());
@@ -122,7 +109,7 @@ class ThirdPartyIntegrations {
   // Send data via blynk.cc
   void sendBlynk(String t, String h) {
     if(!Blynk.connected()){
-      Blynk.config(blynkKey.c_str());
+      Blynk.config(conf.blynkKey.c_str());
       Serial.println("Not connected to Blynk server, reconnecting"); 
       Blynk.connect(3333);  // timeout set to 10 seconds and then continue without Blynk
       while (Blynk.connect() == false) {
@@ -147,7 +134,7 @@ class ThirdPartyIntegrations {
     String host = "api.pushingbox.com";
     Serial.println("Connecting to " + host);
   
-    String url = "GET /pushingbox?devid=" + pushingBoxKey +
+    String url = "GET /pushingbox?devid=" + conf.pushingBoxKey +
         "&temp=" + t +
         "&humidity=" + h;
         
@@ -170,16 +157,8 @@ class ThirdPartyIntegrations {
   private:
     int thingSpeakFailedCounter;
 
-    const bool useThingSpeak;
-    const bool useBlynk;
-    const bool usePushingBox;
-    const bool useDweet;
-    
-    const long thingSpeakChannel;
-    const String thingSpeakKey;
-    const String blynkKey;
-    const String pushingBoxKey;
-    const String dweetThing;
+    // Reference to global settings.
+    ThirdPartyConfig& conf;
 };
 
 #endif

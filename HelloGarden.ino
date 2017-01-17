@@ -6,6 +6,8 @@
 #include "DhtReader.h"
 #include "ThirdPartyIntegrations.h"
 #include "Config.h"
+#include "ConfigSetter.h"
+#include "Data.h"
 
 // Pin globals
 #define RELAY_1 D5
@@ -18,11 +20,13 @@ DhtReader dht(globals.dhtPin, DHT11, 16, globals.minSensorIntervalMs);
 ThirdPartyIntegrations integrations(globals.thirdPartyConfig);
 ESP8266WebServer server(80);
 
-  
 void handleRoot() {
-  digitalWrite(globals.ledPin, 1);
-  server.send(200, "text/plain", "hello from esp8266!!!!");
-  digitalWrite(globals.ledPin, 0);
+  server.send(200, "text/html", getSettingsForm(globals));
+}
+
+void handleSubmit() {
+  processResult(server, globals);
+  server.send(200, "text/plain", "thanks");
 }
 
 bool relay1 = 0;
@@ -122,6 +126,7 @@ void setup(void){
   server.on("/relay1", handleToggleRelay1);
   server.on("/argTest1", handleGenericArgs);
   server.on("/argTest2", handleSpecificArg);
+  server.on("/submit", handleSubmit);
   server.onNotFound(handleNotFound);
 
   server.begin();
