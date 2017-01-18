@@ -1,21 +1,15 @@
 #ifndef DATA_H
 #define DATA_H
 
-const char SettingsHeader[] PROGMEM = "<html>\
-  <head>\
-    <title>Settings</title>\
-    <style>\
-      body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }\
-    </style>\
-  </head>\
-  <body>\
-    <h1>Hello from ESP8266!</h1>\
-    <form action='/submit' method='POST'>\n\
-";
+String SettingsHeader = "<html><head><title>Gardenbot</title><style>body { background-color: #cccccc; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }</style></head><body>\n";
 
-const char SettingsFooter[] PROGMEM = "    <input type='submit' value='Submit'>\
-</form>\
-  </body>\
-</html>";
+String SettingsFooter = "  </body></html>";
+
+// Link to other settings pages.
+String SettingsLinks = "<a href='/integrationSettings'>Integration Settings</a>\n";
+
+// '/integrationSettings' -> '/submitIntegrationSettings'
+String IntegrationFormHeader = "<h1>Integration Settings</h1><form action='/submitIntegrationSettings' method='POST'>\n";
+String IntegrationFormFooter = "<input type='submit' value='Submit'></form>";
 
 #endif

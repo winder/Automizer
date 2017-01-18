@@ -7,7 +7,6 @@
 #include "ThirdPartyIntegrations.h"
 #include "Config.h"
 #include "ConfigSetter.h"
-#include "Data.h"
 
 // Pin globals
 #define RELAY_1 D5
@@ -20,13 +19,24 @@ DhtReader dht(globals.dhtPin, DHT11, 16, globals.minSensorIntervalMs);
 ThirdPartyIntegrations integrations(globals.thirdPartyConfig);
 ESP8266WebServer server(80);
 
-void handleRoot() {
-  server.send(200, "text/html", getSettingsForm(globals));
+ void handleRoot() {
+  digitalWrite(globals.ledPin, 1);
+  server.send(200, "text/plain", "hello from esp8266!!!!");
+  digitalWrite(globals.ledPin, 0);
 }
 
-void handleSubmit() {
-  processResult(server, globals);
-  server.send(200, "text/plain", "thanks");
+void handleSettings() {
+  Serial.print("handleSettings: "); Serial.println(server.uri());
+  // Integration settings
+  if (server.uri() == "/submitIntegrationSettings") {
+    processIntegrationResults(server, globals);
+    server.send(200, "text/html", getIntegrationSettingsPage(globals));
+  } else if (server.uri() == "/integrationSettings") {
+    server.send(200, "text/html", getIntegrationSettingsPage(globals));
+    return;
+  }
+  
+  server.send(200, "text/html", getSettingsLinksPage());
 }
 
 bool relay1 = 0;
@@ -80,6 +90,12 @@ void handleSensor() {
 }
 
 void handleNotFound(){
+  if (server.uri().startsWith("/submit")) {
+    Serial.println("Setting submission detected.");
+    handleSettings();
+    return;
+  }
+  
   digitalWrite(globals.ledPin, 1);
   String message = "File Not Found\n\n";
   message += "URI: ";
@@ -122,11 +138,12 @@ void setup(void){
 
   // pages
   server.on("/", handleRoot);
+  server.on("/settings", handleSettings);
+  server.on("/integrationSettings", handleSettings);
   server.on("/dht", handleSensor);
   server.on("/relay1", handleToggleRelay1);
   server.on("/argTest1", handleGenericArgs);
   server.on("/argTest2", handleSpecificArg);
-  server.on("/submit", handleSubmit);
   server.onNotFound(handleNotFound);
 
   server.begin();

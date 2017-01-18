@@ -7,7 +7,6 @@
 #include <string.h>
 
 String getCheckbox(String name, String description, bool checked) {
-  Serial.println("Checked: " + String(checked));
   return "<input type='checkbox' name='" + name + "'" + (checked ? " checked> ":"> ") + description + "<br>\n";
 }
 
@@ -15,8 +14,13 @@ String getString(String name, String description, String value) {
   return description + ": <input type='text' name='" + name + "' value='" + value + "'><br>\n";
 }
 
-String getSettingsForm(const Config& c) {
-  String fields = "";
+String getSettingsLinksPage() {
+  return SettingsHeader + SettingsLinks + SettingsFooter;
+}
+
+String getIntegrationSettingsPage(const Config& c) {
+
+  String fields = String(IntegrationFormHeader);
   fields += getCheckbox("useThingSpeak", "Use ThingSpeak", c.thirdPartyConfig.useThingSpeak);
   fields += getString("thingSpeakKey", "ThingSpeak Key", c.thirdPartyConfig.thingSpeakKey);
   fields += getString("thingSpeakChannel", "ThingSpeak Channel", String(c.thirdPartyConfig.thingSpeakChannel));
@@ -29,11 +33,12 @@ String getSettingsForm(const Config& c) {
   fields += "<br>\n";
   fields += getCheckbox("useDweet", "Use Dweet", c.thirdPartyConfig.useDweet);
   fields += getString("dweetThing", "Dweet Thing", c.thirdPartyConfig.dweetThing);
+  fields += String(IntegrationFormFooter);
 
-  return String(SettingsHeader) + fields + String(SettingsFooter);
+  return SettingsHeader + fields + SettingsFooter;
 }
 
-bool processResult(ESP8266WebServer& server, Config& c) {
+bool processIntegrationResults(ESP8266WebServer& server, Config& c) {
   c.thirdPartyConfig.useThingSpeak = strcmp(server.arg("useThingSpeak").c_str(), "") != 0;
   c.thirdPartyConfig.thingSpeakKey = server.arg("thingSpeakKey");
   String channel = server.arg("thingSpeakChannel");
