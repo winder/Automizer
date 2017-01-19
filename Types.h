@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <stdint.h>
+
 enum PinType {
   Input_TempSensor1,
   Input_TempSensor2,
