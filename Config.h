@@ -45,7 +45,11 @@ struct Config {
 #ifdef ESP8266
   //const Pin pins[8] = {{D1},{D2},{D3},{D4},{D5},{D6},{D7},{D8}};
 
-  const Pin pins[8] = {
+  // This flag is checked each loop, when false the pins will be re-initialized.
+  // The settings page sets this flag to false when they need to be re-initialized.
+  bool pinsInitialized = false;
+
+  Pin pins[8] = {
     Pin(D1),
     Pin(D2),
     Pin(D3),

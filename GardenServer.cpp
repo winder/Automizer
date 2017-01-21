@@ -19,7 +19,6 @@ void GardenServer::setup() {
       server.onNotFound(BIND(handleNotFound));
     
       server.begin();
-      Serial.println("HTTP server started");
 }
 
 String GardenServer::indexProcessor(const String& key) {
@@ -115,6 +114,7 @@ void GardenServer::handleSpecificArg() {
 }
 
 void GardenServer::handleSensor() {
+  /*
   // read sensor
   dht_data data = dht.getTemperature();
 
@@ -128,6 +128,8 @@ void GardenServer::handleSensor() {
 
   // send to someones browser when asked
   server.send(200, "text/plain", webString);
+  */
+  server.send(200, "text/plain", "TODO");
 }
 
 void GardenServer::handleNotFound(){

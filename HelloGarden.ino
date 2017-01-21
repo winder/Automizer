@@ -3,6 +3,7 @@
 #include <ESP8266mDNS.h>
 #include <FS.h>
 #include <WiFiManager.h>
+#include <vector>
 
 #include "DhtReader.h"
 #include "ThirdPartyIntegrations.h"
@@ -13,8 +14,8 @@
 
 // Globals
 Config globals;
-DhtReader dht(globals.dhtPin, DHT11, 16, globals.minSensorIntervalMs);
-GardenServer gardenServer(globals, dht);
+std::vector<DhtReader> dhtReaders;
+GardenServer gardenServer(globals);
 
 // Helper objects
 ThirdPartyIntegrations integrations(globals.thirdPartyConfig);
@@ -24,10 +25,10 @@ void setup(void){
   SPIFFS.begin();
   loadConfig(globals);
 
-  pinMode(globals.ledPin, OUTPUT);
-  pinMode(5, OUTPUT);
-
-  digitalWrite(globals.ledPin, 0);
+  globals.pins[0].type = Input_TempSensorDHT11;
+  
+  globals.pinsInitialized = false;
+  
   Serial.begin(115200);
 
   //WiFiManager
@@ -45,35 +46,78 @@ void setup(void){
   // HTTP Server
   gardenServer.setup();
   Serial.println("HTTP server started");
-
-  digitalWrite(globals.ledPin, LOW);
 }
 
 // Main loop.
 // Check for client connections and upload data on an interval.
 void loop(void){
+  initializePins();
   gardenServer.handleClient();
   uploadData();
 }
 
+
+void initializePins() {
+  if (!globals.pinsInitialized) {
+    //pinMode(globals.ledPin, OUTPUT);
+
+    // Initialize the pins
+    int numPins = sizeof(globals.pins)/sizeof(*(globals.pins));
+    for (int i = 0; i < numPins; i++) {
+      switch (globals.pins[i].type) {
+        case Input_TempSensorDHT11:
+          Serial.println("CREATING DHT11");
+          pinMode(globals.pins[i].pinNumber, INPUT);
+          dhtReaders.push_back(DhtReader(globals.pins[i].pinNumber, DHT11, 16, globals.minSensorIntervalMs));
+          break;
+        case Input_TempSensorDHT22:
+          Serial.println("CREATING DHT22");
+          pinMode(globals.pins[i].pinNumber, INPUT);
+          dhtReaders.push_back(DhtReader(globals.pins[i].pinNumber, DHT22, 16, globals.minSensorIntervalMs));
+          break;
+        case Output_Relay:
+          Serial.println("CREATING RELAY");
+          pinMode(globals.pins[i].pinNumber, OUTPUT);
+          // TODO: Configure relay triggers
+          break;
+        default:
+          break;
+      }
+    }
+    
+    globals.pinsInitialized = true;
+  }
+}
+
+  
 unsigned long previousUploadMillis = 0;
 void uploadData() {
   unsigned long currentMillis = millis();
  
   if(currentMillis - previousUploadMillis >= globals.uploadInterval) {
+    std::vector<dht_data> dataVector;
+    bool failed = false;
+    for (int i=0; !failed && i < dhtReaders.size(); i++) {
+      DhtReader& dht = dhtReaders[i];
+      dht_data data = dht.getTemperature();
+      if (!data.failed) {
+        dataVector.push_back(data);
 
-    dht_data data = dht.getTemperature();
-    if (!data.failed) {
-      Serial.println("Good data received, uploading.");
-      dht.dumpTempCache();
-      
-      // Got a good reading, reset the previous upload time.
+        Serial.println("Good data received, uploading.");
+        dht.dumpTempCache();
+    
+        //String t = String(data.temp_f, 2);
+        //String h = String(data.humidity, 2);
+    
+        //integrations.upload(t, h);
+      } else {
+        failed = true;
+      }
+    }
+
+    // If we got a good reading, reset the previous upload time.
+    if (!failed) {
       previousUploadMillis = currentMillis;
-  
-      String t = String(data.temp_f, 2);
-      String h = String(data.humidity, 2);
-
-      integrations.upload(t, h);
     }
   }
 }

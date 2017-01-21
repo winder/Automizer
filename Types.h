@@ -4,16 +4,21 @@
 #include <stdint.h>
 
 enum PinType {
-  Input_TempSensor1,
-  Input_TempSensor2,
-  Input_TempSensor3,
+  Disabled,
+  Input_TempSensorDHT11,
+  Input_TempSensorDHT22,
   Output_Relay  
 };
 
 enum TriggerType {
+  None,
   Temperature,
   Schedule,
-  Manual
+  Manual,
+};
+
+struct InputConfig {
+  
 };
 
 struct TemperatureTriggerConfig {
@@ -30,18 +35,27 @@ struct ManualTriggerConfig {
   bool enabled;
 };
 
-struct Pin {
-  Pin(uint8_t num) : pinNumber(num) {};
-  
-  uint8_t pinNumber;
-  PinType type;
+
+struct OutputConfig {
   TriggerType trigger;
-  
   union {
-    TemperatureTriggerConfig tempConfig;
-    ScheduleTriggerConfig scheduleConfig;
-    ManualTriggerConfig manualConfig;
-    char reserved[128];
+    TemperatureTriggerConfig  tempConfig;
+    ScheduleTriggerConfig     scheduleConfig;
+    ManualTriggerConfig       manualConfig;
+  };
+};
+
+struct Pin {
+  Pin(uint8_t num) : pinNumber(num), type(Disabled) {};
+  
+  const uint8_t pinNumber;
+  PinType type;
+
+  union {
+    InputConfig   inputConfig;
+    OutputConfig  outputConfig;
+    // 128 bytes reserved for configuration.
+    char          reserved[128];
   };
 };
 

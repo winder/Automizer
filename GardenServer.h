@@ -7,10 +7,9 @@
 
 class GardenServer {
   public:
-    GardenServer(Config& conf, DhtReader& reader) : 
+    GardenServer(Config& conf) : 
         globals(conf),
-        server(80),
-        dht(reader)
+        server(80)
     {
     }
     
@@ -37,7 +36,7 @@ class GardenServer {
 
     ESP8266WebServer server;
     Config& globals;
-    DhtReader& dht;
+    //DhtReader& dht;
 
 };
 
