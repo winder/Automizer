@@ -31,10 +31,6 @@ struct ThirdPartyConfig {
 };
 
 struct Config {
-  // wifi settings
-  char ssid[KEY_LEN] = "YOUR-WIFI-SSID";
-  char password[KEY_LEN] = "YOUR-WIFI-PASSWORD";
-
   // Pin config
   int ledPin = LED_BUILTIN;
   int dhtPin = D1;
@@ -43,6 +39,8 @@ struct Config {
   long minSensorIntervalMs = 2000;
   long uploadInterval = 1000 * 60 * 1;
 
+  char reserved[256];
+  
 // Initialize pins based on the ESP8266 mappings...
 #ifdef ESP8266
   //const Pin pins[8] = {{D1},{D2},{D3},{D4},{D5},{D6},{D7},{D8}};

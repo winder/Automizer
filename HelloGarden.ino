@@ -2,6 +2,7 @@
 #include <WiFiClient.h>
 #include <ESP8266mDNS.h>
 #include <FS.h>
+#include <WiFiManager.h>
 
 #include "DhtReader.h"
 #include "ThirdPartyIntegrations.h"
@@ -28,24 +29,20 @@ void setup(void){
 
   digitalWrite(globals.ledPin, 0);
   Serial.begin(115200);
-  WiFi.begin(globals.ssid, globals.password);
-  Serial.println("starting!!!!");
 
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(globals.ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  if (MDNS.begin("esp8266")) {
-    Serial.println("MDNS responder started");
-  }
+  //WiFiManager
+  //Local intialization. Once its business is done, there is no need to keep it around
+  WiFiManager wifiManager;
+  //reset saved settings
+  //wifiManager.resetSettings();
 
-  // pages
+  //fetches ssid and pass from eeprom and tries to connect
+  //if it does not connect it starts an access point with the specified name
+  //here  "AutoConnectAP"
+  //and goes into a blocking loop awaiting configuration
+  wifiManager.autoConnect("ThingBot");
+
+  // HTTP Server
   gardenServer.setup();
   Serial.println("HTTP server started");
 
