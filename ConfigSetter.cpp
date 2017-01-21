@@ -8,28 +8,28 @@ String getString(String name, String description, String value) {
   return description + ": <input type='text' name='" + name + "' value='" + value + "'><br>\n";
 }
 
-String getSettingsLinksPage() {
-  return SettingsHeader + SettingsLinks + SettingsFooter;
+String getSettingsLinksBody() {
+  return SettingsLinks;
 }
 
-String getIntegrationSettingsPage(const Config& c) {
+String getIntegrationSettingsBody(const Config& c) {
 
-  String fields = String(IntegrationFormHeader);
-  fields += getCheckbox("useThingSpeak", "Use ThingSpeak", c.thirdPartyConfig.useThingSpeak);
-  fields += getString("thingSpeakKey", "ThingSpeak Key", c.thirdPartyConfig.thingSpeakKey);
-  fields += getString("thingSpeakChannel", "ThingSpeak Channel", String(c.thirdPartyConfig.thingSpeakChannel));
-  fields += "<br>\n";
-  fields += getCheckbox("useBlynk", "Use Blynk", c.thirdPartyConfig.useThingSpeak);
-  fields += getString("blynkKey", "Blynk Key", c.thirdPartyConfig.blynkKey);
-  fields += "<br>\n";
-  fields += getCheckbox("usePushingBox", "Use Pushing Box", c.thirdPartyConfig.usePushingBox);
-  fields += getString("pushingBoxKey", "Pushing Box Key", c.thirdPartyConfig.pushingBoxKey);
-  fields += "<br>\n";
-  fields += getCheckbox("useDweet", "Use Dweet", c.thirdPartyConfig.useDweet);
-  fields += getString("dweetThing", "Dweet Thing", c.thirdPartyConfig.dweetThing);
-  fields += String(IntegrationFormFooter);
+  String body = String(IntegrationFormHeader);
+  body += getCheckbox("useThingSpeak", "Use ThingSpeak", c.thirdPartyConfig.useThingSpeak);
+  body += getString("thingSpeakKey", "ThingSpeak Key", c.thirdPartyConfig.thingSpeakKey);
+  body += getString("thingSpeakChannel", "ThingSpeak Channel", String(c.thirdPartyConfig.thingSpeakChannel));
+  body += "<br>\n";
+  body += getCheckbox("useBlynk", "Use Blynk", c.thirdPartyConfig.useThingSpeak);
+  body += getString("blynkKey", "Blynk Key", c.thirdPartyConfig.blynkKey);
+  body += "<br>\n";
+  body += getCheckbox("usePushingBox", "Use Pushing Box", c.thirdPartyConfig.usePushingBox);
+  body += getString("pushingBoxKey", "Pushing Box Key", c.thirdPartyConfig.pushingBoxKey);
+  body += "<br>\n";
+  body += getCheckbox("useDweet", "Use Dweet", c.thirdPartyConfig.useDweet);
+  body += getString("dweetThing", "Dweet Thing", c.thirdPartyConfig.dweetThing);
+  body += String(IntegrationFormFooter);
 
-  return SettingsHeader + fields + SettingsFooter;
+  return body;
 }
 
 bool processIntegrationResults(ESP8266WebServer& server, Config& c) {

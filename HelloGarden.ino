@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266mDNS.h>
+#include <FS.h>
 
 #include "DhtReader.h"
 #include "ThirdPartyIntegrations.h"
@@ -19,6 +20,8 @@ ThirdPartyIntegrations integrations(globals.thirdPartyConfig);
 
 // Setup server.
 void setup(void){
+  SPIFFS.begin();
+
   pinMode(globals.ledPin, OUTPUT);
   pinMode(5, OUTPUT);
 

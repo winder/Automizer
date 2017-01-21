@@ -2,8 +2,10 @@
 
 #include "ConfigSetter.h"
 #include "DhtReader.h"
+#include "ESPTemplateProcessor.h"
 
 #define BIND(NAME) std::bind(&GardenServer::NAME, this)
+#define BIND_PROCESSOR(NAME) std::bind(&GardenServer::NAME, this, std::placeholders::_1);
 
 void GardenServer::setup() {
       // pages
@@ -20,10 +22,29 @@ void GardenServer::setup() {
       Serial.println("HTTP server started");
 }
 
+String GardenServer::indexProcessor(const String& key) {
+  return "Hello Garden";
+}
+
+String GardenServer::settingsProcessor(const String& key) {
+  if (key == "TITLE") return "Gardenbot Settings";
+  else if (key == "BODY") return getIntegrationSettingsBody(globals);
+}
+
+String GardenServer::settingsLinksProcessor(const String& key) {
+  if (key == "TITLE") return "Gardenbot Settings";
+  else if (key == "BODY") return getSettingsLinksBody();
+}
+
 void GardenServer::handleRoot() {
-  digitalWrite(globals.ledPin, 1);
-  server.send(200, "text/plain", "hello from esp8266!!!!");
-  digitalWrite(globals.ledPin, 0);
+  ProcessorCallback cb = BIND_PROCESSOR(indexProcessor);
+
+  if (ESPTemplateProcessor(server).send(String("/index.html"), cb)) {
+    Serial.println("SUCCESS");
+  } else {
+    Serial.println("FAIL");
+    server.send(200, "text/plain", "FUBAR!!!");
+  }
 }
 
 void GardenServer::handleSettings() {
@@ -31,13 +52,29 @@ void GardenServer::handleSettings() {
   // Integration settings
   if (server.uri() == "/submitIntegrationSettings") {
     processIntegrationResults(server, globals);
-    server.send(200, "text/html", getIntegrationSettingsPage(globals));
-  } else if (server.uri() == "/integrationSettings") {
-    server.send(200, "text/html", getIntegrationSettingsPage(globals));
-    return;
   }
   
-  server.send(200, "text/html", getSettingsLinksPage());
+  
+  if (server.uri() == "/submitIntegrationSettings" || server.uri() == "/integrationSettings") {
+    ProcessorCallback cb = BIND_PROCESSOR(settingsProcessor);
+    if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
+      Serial.println("SUCCESS");
+      return;
+    } else {
+      Serial.println("FAIL");
+      handleRoot();
+    }
+    return;
+  }
+
+  ProcessorCallback cb = BIND_PROCESSOR(settingsLinksProcessor);
+  if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
+    Serial.println("SUCCESS");
+    return;
+  } else {
+    Serial.println("FAIL");
+    handleRoot();
+  }
 }
 
 

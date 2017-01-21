@@ -30,7 +30,11 @@ class GardenServer {
     void handleSpecificArg();
     void handleNotFound();
 
-    
+
+    String indexProcessor(const String& key);
+    String settingsLinksProcessor(const String& key);
+    String settingsProcessor(const String& key);
+
     ESP8266WebServer server;
     Config& globals;
     DhtReader& dht;

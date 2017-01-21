@@ -7,9 +7,9 @@
 #include <string.h>
 #include <ESP8266WebServer.h>
 
-String getSettingsLinksPage();
+String getSettingsLinksBody();
 
-String getIntegrationSettingsPage(const Config& c);
+String getIntegrationSettingsBody(const Config& c);
 
 bool processIntegrationResults(ESP8266WebServer& server, Config& c);
 
