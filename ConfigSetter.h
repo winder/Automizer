@@ -13,4 +13,8 @@ String getIntegrationSettingsBody(const Config& c);
 
 bool processIntegrationResults(ESP8266WebServer& server, Config& c);
 
+void loadConfig(Config& c);
+
+void saveConfig(Config& c);
+
 #endif

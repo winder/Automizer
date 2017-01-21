@@ -2,37 +2,38 @@
 #define CONFIG_H
 
 #include "Types.h"
-#include "WString.h"
 #include "pins_arduino.h"
 
 // #ifdef ESP8266
 #define NUM_PINS 8
+#define KEY_LEN 64
 
 struct ThirdPartyConfig {
-  // Enabled services
-  bool useThingSpeak = false;
-  bool useBlynk = false;
-  bool usePushingBox = false;
-  bool useDweet = false;
-      
   // Thingspeak globals
+  bool useThingSpeak = false;
   unsigned long thingSpeakChannel =  123456; // YOUR THINGSPEAK CHANNEL
-  String thingSpeakKey = "THINGSPEAK-KEY";
+  char thingSpeakKey[KEY_LEN] = "THINGSPEAK-KEY";
   
   // Blynk globals
-  String blynkKey = "BLYNK-KEY";
+  bool useBlynk = false;
+  char blynkKey[KEY_LEN] = "BLYNK-KEY";
   
   // pushinbox globals
-  String pushingBoxKey = "PUSHINGBOX-KEY";
+  bool usePushingBox = false;
+  char pushingBoxKey[KEY_LEN] = "PUSHINGBOX-KEY";
   
   // Dweet globals
-  String dweetThing = "DWEET-THING";
+  bool useDweet = false;
+  char dweetThing[KEY_LEN] = "DWEET-THING";
+
+  // For future services
+  char reserved[512];
 };
 
 struct Config {
   // wifi settings
-  String ssid = "YOUR-WIFI-SSID";
-  String password = "YOUR-WIFI-PASSWORD";
+  char ssid[KEY_LEN] = "YOUR-WIFI-SSID";
+  char password[KEY_LEN] = "YOUR-WIFI-PASSWORD";
 
   // Pin config
   int ledPin = LED_BUILTIN;

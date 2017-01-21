@@ -79,7 +79,9 @@ class ThirdPartyIntegrations {
     client.print("POST /update HTTP/1.1\n");
     client.print("Host: api.thingspeak.com\n");
     client.print("Connection: close\n");
-    client.print("X-THINGSPEAKAPIKEY: "+conf.thingSpeakKey+"\n");
+    client.print("X-THINGSPEAKAPIKEY: ");
+    client.print(conf.thingSpeakKey);
+    client.print("\n");
     client.print("Content-Type: application/x-www-form-urlencoded\n");
     client.print("Content-Length: ");
     client.print(tsData.length());
@@ -109,9 +111,9 @@ class ThirdPartyIntegrations {
   // Send data via blynk.cc
   void sendBlynk(String t, String h) {
     if(!Blynk.connected()){
-      Blynk.config(conf.blynkKey.c_str());
+      Blynk.config(conf.blynkKey);
       Serial.println("Not connected to Blynk server, reconnecting"); 
-      Blynk.connect(3333);  // timeout set to 10 seconds and then continue without Blynk
+      Blynk.connect(10);  // timeout set to 10 seconds and then continue without Blynk
       while (Blynk.connect() == false) {
         // Wait until connected
       }
@@ -134,7 +136,7 @@ class ThirdPartyIntegrations {
     String host = "api.pushingbox.com";
     Serial.println("Connecting to " + host);
   
-    String url = "GET /pushingbox?devid=" + conf.pushingBoxKey +
+    String url = "GET /pushingbox?devid=" + String(conf.pushingBoxKey) +
         "&temp=" + t +
         "&humidity=" + h;
         

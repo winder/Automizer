@@ -21,13 +21,14 @@ ThirdPartyIntegrations integrations(globals.thirdPartyConfig);
 // Setup server.
 void setup(void){
   SPIFFS.begin();
+  loadConfig(globals);
 
   pinMode(globals.ledPin, OUTPUT);
   pinMode(5, OUTPUT);
 
   digitalWrite(globals.ledPin, 0);
   Serial.begin(115200);
-  WiFi.begin(globals.ssid.c_str(), globals.password.c_str());
+  WiFi.begin(globals.ssid, globals.password);
   Serial.println("starting!!!!");
 
   // Wait for connection

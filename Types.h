@@ -41,6 +41,7 @@ struct Pin {
     TemperatureTriggerConfig tempConfig;
     ScheduleTriggerConfig scheduleConfig;
     ManualTriggerConfig manualConfig;
+    char reserved[128];
   };
 };
 

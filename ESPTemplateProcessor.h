@@ -17,13 +17,13 @@ class ESPTemplateProcessor {
     {
       // Open file.
       if(!SPIFFS.exists(filePath)) {
-        Serial.print("Cannot process "); Serial.print(filePath); Serial.println(": Does not exist.");
+        //Serial.print("Cannot process "); Serial.print(filePath); Serial.println(": Does not exist.");
         return false;
       }
 
       File file = SPIFFS.open(filePath, "r");
       if (!file) {
-        Serial.print("Cannot process "); Serial.print(filePath); Serial.println(": Failed to open.");
+        //Serial.print("Cannot process "); Serial.print(filePath); Serial.println(": Failed to open.");
         return false;
       }
 
@@ -31,7 +31,6 @@ class ESPTemplateProcessor {
       server.sendHeader("Content-Type","text/html",true);
       server.sendHeader("Cache-Control","no-cache");
       server.send(200);
-      //server.sendContent(<chunk>)
 
       // Process!
       static const uint16_t MAX = 100;
@@ -64,13 +63,13 @@ class ESPTemplateProcessor {
           
           // Check for bad exit.
           if (val == -1 && !found) {
-            Serial.print("Cannot process "); Serial.print(filePath); Serial.println(": Unable to parse.");
+            //Serial.print("Cannot process "); Serial.print(filePath); Serial.println(": Unable to parse.");
             return false;
           }
 
           // Get substitution
           String processed = processor(keyBuffer);
-          Serial.print("Lookup '"); Serial.print(keyBuffer); Serial.print("' received: "); Serial.println(processed);
+          //Serial.print("Lookup '"); Serial.print(keyBuffer); Serial.print("' received: "); Serial.println(processed);
           server.sendContent(processed);
         } else {
           bufferLen++;
@@ -88,10 +87,10 @@ class ESPTemplateProcessor {
         server.sendContent("");
         return true;
       } else {
-        Serial.print("Failed to process '"); Serial.print(filePath); Serial.println("': Didn't reach the end of the file.");
+        //Serial.print("Failed to process '"); Serial.print(filePath); Serial.println("': Didn't reach the end of the file.");
+        return false;
       }
     }
-
 
   private:
     ESP8266WebServer &server;

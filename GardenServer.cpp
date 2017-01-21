@@ -52,6 +52,7 @@ void GardenServer::handleSettings() {
   // Integration settings
   if (server.uri() == "/submitIntegrationSettings") {
     processIntegrationResults(server, globals);
+    saveConfig(globals);
   }
   
   
@@ -151,5 +152,3 @@ void GardenServer::handleNotFound(){
   server.send(404, "text/plain", message);
   digitalWrite(globals.ledPin, 0);
 }
-
-
