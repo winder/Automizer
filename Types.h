@@ -47,7 +47,8 @@ struct OutputConfig {
 
 struct Pin {
   Pin(uint8_t num) : pinNumber(num), type(Disabled) {};
-  
+
+  char name[32];
   const uint8_t pinNumber;
   PinType type;
 

@@ -33,6 +33,7 @@ class GardenServer {
     String indexProcessor(const String& key);
     String settingsLinksProcessor(const String& key);
     String settingsProcessor(const String& key);
+    String settingsPinProcessor(const String& key);
 
     ESP8266WebServer server;
     Config& globals;

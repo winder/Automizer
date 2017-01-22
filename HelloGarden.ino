@@ -23,7 +23,7 @@ ThirdPartyIntegrations integrations(globals.thirdPartyConfig);
 // Setup server.
 void setup(void){
   SPIFFS.begin();
-  loadConfig(globals);
+  //loadConfig(globals);
 
   globals.pins[0].type = Input_TempSensorDHT11;
   
@@ -62,18 +62,19 @@ void initializePins() {
     //pinMode(globals.ledPin, OUTPUT);
 
     // Initialize the pins
-    int numPins = sizeof(globals.pins)/sizeof(*(globals.pins));
+    //int numPins = sizeof(globals.pins)/sizeof(*(globals.pins));
+    int numPins = NUM_PINS;
     for (int i = 0; i < numPins; i++) {
       switch (globals.pins[i].type) {
         case Input_TempSensorDHT11:
           Serial.println("CREATING DHT11");
           pinMode(globals.pins[i].pinNumber, INPUT);
-          dhtReaders.push_back(DhtReader(globals.pins[i].pinNumber, DHT11, 16, globals.minSensorIntervalMs));
+          dhtReaders.push_back(DhtReader(globals.pins[i], DHT11, 16, globals.minSensorIntervalMs));
           break;
         case Input_TempSensorDHT22:
           Serial.println("CREATING DHT22");
           pinMode(globals.pins[i].pinNumber, INPUT);
-          dhtReaders.push_back(DhtReader(globals.pins[i].pinNumber, DHT22, 16, globals.minSensorIntervalMs));
+          dhtReaders.push_back(DhtReader(globals.pins[i], DHT22, 16, globals.minSensorIntervalMs));
           break;
         case Output_Relay:
           Serial.println("CREATING RELAY");

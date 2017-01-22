@@ -49,7 +49,7 @@ struct Config {
   // The settings page sets this flag to false when they need to be re-initialized.
   bool pinsInitialized = false;
 
-  Pin pins[8] = {
+  Pin pins[NUM_PINS] = {
     Pin(D1),
     Pin(D2),
     Pin(D3),

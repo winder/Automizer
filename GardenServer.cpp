@@ -12,6 +12,7 @@ void GardenServer::setup() {
       server.on("/", BIND(handleRoot));
       server.on("/settings", BIND(handleSettings));
       server.on("/integrationSettings", BIND(handleSettings));
+      server.on("/pinSettings", BIND(handleSettings));
       server.on("/dht", BIND(handleSensor));
       server.on("/relay1", BIND(handleToggleRelay1));
       server.on("/argTest1", BIND(handleGenericArgs));
@@ -28,6 +29,11 @@ String GardenServer::indexProcessor(const String& key) {
 String GardenServer::settingsProcessor(const String& key) {
   if (key == "TITLE") return "Gardenbot Settings";
   else if (key == "BODY") return getIntegrationSettingsBody(globals);
+}
+
+String GardenServer::settingsPinProcessor(const String& key) {
+  if (key == "TITLE") return "Gardenbot Pin Settings";
+  else if (key == "BODY") return getPinSettingsBody(globals);
 }
 
 String GardenServer::settingsLinksProcessor(const String& key) {
@@ -53,7 +59,17 @@ void GardenServer::handleSettings() {
     processIntegrationResults(server, globals);
     saveConfig(globals);
   }
-  
+
+  if (server.uri() == "/submitPinSettings") {
+    processPinResults(server, globals);
+    if (server.args() > 0 ) {
+      for ( uint8_t i = 0; i < server.args(); i++ ) {
+        Serial.println(server.argName(i) + ": " + server.arg(i));
+       }
+    }
+    //processIntegrationResults(server, globals);
+    //saveConfig(globals);
+  }
   
   if (server.uri() == "/submitIntegrationSettings" || server.uri() == "/integrationSettings") {
     ProcessorCallback cb = BIND_PROCESSOR(settingsProcessor);
@@ -67,6 +83,18 @@ void GardenServer::handleSettings() {
     return;
   }
 
+  if (server.uri() == "/submitPinSettings" || server.uri() == "/pinSettings") {
+    ProcessorCallback cb = BIND_PROCESSOR(settingsPinProcessor);
+    if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
+      Serial.println("SUCCESS");
+      return;
+    } else {
+      Serial.println("FAIL");
+      handleRoot();
+    }
+    return;
+  }
+  
   ProcessorCallback cb = BIND_PROCESSOR(settingsLinksProcessor);
   if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
     Serial.println("SUCCESS");

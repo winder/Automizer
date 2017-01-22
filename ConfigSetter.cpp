@@ -9,12 +9,63 @@ String getString(String name, String description, String value) {
   return description + ": <input type='text' name='" + name + "' value='" + value + "'><br>\n";
 }
 
+String getNumber(String name, String description, String value) {
+  return description + ": <input type='number' name='" + name + "' value='" + value + "'><br>\n";
+}
+
 String getSettingsLinksBody() {
   return SettingsLinks;
 }
 
-String getIntegrationSettingsBody(const Config& c) {
+String getEnumName(PinType type) {
+  switch(type) {
+    default:
+    case Disabled:              return "Disabled";
+    case Input_TempSensorDHT11: return "Temperature Input (DHT11)";
+    case Input_TempSensorDHT22: return "Temperature Input (DHT22)";
+    case Output_Relay:          return "Relay";                    
+  }
+  return "Disabled";
+}
 
+String getPinCombo(String name, String description, PinType selected) {
+  String field = description;
+  field += " <select name='" + name + "'>\n";
+  field += " <option value='disabled'" + String(((selected == Disabled) ? " selected>":">")) + getEnumName(Disabled) + "</option>\n";
+  field += " <option value='dht11'" + String(((selected == Input_TempSensorDHT11) ? " selected>":">")) + getEnumName(Input_TempSensorDHT11) + "</option>\n";
+  field += " <option value='dht22'" + String(((selected == Input_TempSensorDHT22) ? " selected>":">")) + getEnumName(Input_TempSensorDHT22) + "</option>\n";
+  field += " <option value='relay'" + String(((selected == Output_Relay) ? " selected>":">")) + getEnumName(Output_Relay) + "</option>\n";
+  field += "</select>\n<br>\n";
+  return field;
+}
+
+String getPinSettingsBody(const Config& c) {
+  String body = "<form action='/submitPinSettings' method='POST'>";
+  
+  for (int i = 0; i < NUM_PINS; i++) {
+    String pinName = String("D") + (i+1);
+    body += getPinCombo(String(i), String("Pin ") + pinName, c.pins[i].type);
+  }
+
+  body += "<input type='submit' value='Submit'></form>";
+
+  return body;
+}
+
+PinType stringToPinType(String t) {
+  if (t == "disabled") return Disabled;
+  if (t == "dht11")    return Input_TempSensorDHT11;
+  if (t == "dht22")    return Input_TempSensorDHT22;
+  if (t == "relay")    return Output_Relay;
+  return Disabled;
+}
+bool processPinResults(ESP8266WebServer& server, Config& c) {
+  for (int i = 0; i < NUM_PINS; i++) {
+    c.pins[i].type = stringToPinType(server.arg('0' + i));
+  }
+}
+
+String getIntegrationSettingsBody(const Config& c) {
   String body = String(IntegrationFormHeader);
   body += getCheckbox("useThingSpeak", "Use ThingSpeak", c.thirdPartyConfig.useThingSpeak);
   body += getString("thingSpeakKey", "ThingSpeak Key", c.thirdPartyConfig.thingSpeakKey);
