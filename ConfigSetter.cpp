@@ -2,15 +2,15 @@
 #include <FS.h>
 
 String getCheckbox(String name, String description, bool checked) {
-  return "<input type='checkbox' name='" + name + "'" + (checked ? " checked> ":"> ") + description + "<br>\n";
+  return "<input type='checkbox' name='" + name + "'" + (checked ? " checked> ":"> ") + description + "\n";
 }
 
 String getString(String name, String description, String value) {
-  return description + ": <input type='text' name='" + name + "' value='" + value + "'><br>\n";
+  return description + ": <input type='text' name='" + name + "' value='" + value + "'>\n";
 }
 
 String getNumber(String name, String description, String value) {
-  return description + ": <input type='number' name='" + name + "' value='" + value + "'><br>\n";
+  return description + ": <input type='number' name='" + name + "' value='" + value + "'>\n";
 }
 
 String getSettingsLinksBody() {
@@ -29,13 +29,13 @@ String getEnumName(PinType type) {
 }
 
 String getPinCombo(String name, String description, PinType selected) {
-  String field = description;
-  field += " <select name='" + name + "'>\n";
-  field += " <option value='disabled'" + String(((selected == Disabled) ? " selected>":">")) + getEnumName(Disabled) + "</option>\n";
-  field += " <option value='dht11'" + String(((selected == Input_TempSensorDHT11) ? " selected>":">")) + getEnumName(Input_TempSensorDHT11) + "</option>\n";
-  field += " <option value='dht22'" + String(((selected == Input_TempSensorDHT22) ? " selected>":">")) + getEnumName(Input_TempSensorDHT22) + "</option>\n";
-  field += " <option value='relay'" + String(((selected == Output_Relay) ? " selected>":">")) + getEnumName(Output_Relay) + "</option>\n";
-  field += "</select>\n<br>\n";
+  String field = description + ": ";
+  field += "<select name='" + name + "'>\n";
+  field += "  <option value='disabled'" + String(((selected == Disabled) ? " selected>":">")) + getEnumName(Disabled) + "</option>\n";
+  field += "  <option value='dht11'" + String(((selected == Input_TempSensorDHT11) ? " selected>":">")) + getEnumName(Input_TempSensorDHT11) + "</option>\n";
+  field += "  <option value='dht22'" + String(((selected == Input_TempSensorDHT22) ? " selected>":">")) + getEnumName(Input_TempSensorDHT22) + "</option>\n";
+  field += "  <option value='relay'" + String(((selected == Output_Relay) ? " selected>":">")) + getEnumName(Output_Relay) + "</option>\n";
+  field += "</select>\n";
   return field;
 }
 
@@ -44,7 +44,9 @@ String getPinSettingsBody(const Config& c) {
   
   for (int i = 0; i < NUM_PINS; i++) {
     String pinName = String("D") + (i+1);
-    body += getPinCombo(String(i), String("Pin ") + pinName, c.pins[i].type);
+    body += "<br>Pin " + pinName + " Settings<br>\n";
+    body += getString(String(i) + "_name", String("Name"), String(c.pins[i].name)) + "<br>\n";
+    body += getPinCombo(String(i), String("Type"), c.pins[i].type) + "<br>\n";
   }
 
   body += "<input type='submit' value='Submit'></form>";
@@ -59,26 +61,33 @@ PinType stringToPinType(String t) {
   if (t == "relay")    return Output_Relay;
   return Disabled;
 }
+
 bool processPinResults(ESP8266WebServer& server, Config& c) {
-  for (int i = 0; i < NUM_PINS; i++) {
-    c.pins[i].type = stringToPinType(server.arg('0' + i));
+  for ( uint8_t i = 0; i < server.args(); i++ ) {
+    int idx = server.argName(i).charAt(0) - '0';
+    if (server.argName(i).length() == 1 && idx < NUM_PINS && idx > -1) {
+      c.pins[idx].type = stringToPinType(server.arg(i));
+    }
+    if (server.argName(i).endsWith("_name") && idx < NUM_PINS && idx > -1) {
+      strncpy(c.pins[idx].name, server.arg(i).c_str(), PIN_NAME_LEN);
+    }
   }
 }
 
 String getIntegrationSettingsBody(const Config& c) {
   String body = String(IntegrationFormHeader);
-  body += getCheckbox("useThingSpeak", "Use ThingSpeak", c.thirdPartyConfig.useThingSpeak);
-  body += getString("thingSpeakKey", "ThingSpeak Key", c.thirdPartyConfig.thingSpeakKey);
-  body += getString("thingSpeakChannel", "ThingSpeak Channel", String(c.thirdPartyConfig.thingSpeakChannel));
+  body += getCheckbox("useThingSpeak", "Use ThingSpeak", c.thirdPartyConfig.useThingSpeak) + "<br>\n";
+  body += getString("thingSpeakKey", "ThingSpeak Key", c.thirdPartyConfig.thingSpeakKey) + "<br>\n";
+  body += getString("thingSpeakChannel", "ThingSpeak Channel", String(c.thirdPartyConfig.thingSpeakChannel)) + "<br>\n";
   body += "<br>\n";
-  body += getCheckbox("useBlynk", "Use Blynk", c.thirdPartyConfig.useThingSpeak);
-  body += getString("blynkKey", "Blynk Key", c.thirdPartyConfig.blynkKey);
+  body += getCheckbox("useBlynk", "Use Blynk", c.thirdPartyConfig.useThingSpeak) + "<br>\n";
+  body += getString("blynkKey", "Blynk Key", c.thirdPartyConfig.blynkKey) + "<br>\n";
   body += "<br>\n";
-  body += getCheckbox("usePushingBox", "Use Pushing Box", c.thirdPartyConfig.usePushingBox);
-  body += getString("pushingBoxKey", "Pushing Box Key", c.thirdPartyConfig.pushingBoxKey);
+  body += getCheckbox("usePushingBox", "Use Pushing Box", c.thirdPartyConfig.usePushingBox) + "<br>\n";
+  body += getString("pushingBoxKey", "Pushing Box Key", c.thirdPartyConfig.pushingBoxKey) + "<br>\n";
   body += "<br>\n";
-  body += getCheckbox("useDweet", "Use Dweet", c.thirdPartyConfig.useDweet);
-  body += getString("dweetThing", "Dweet Thing", c.thirdPartyConfig.dweetThing);
+  body += getCheckbox("useDweet", "Use Dweet", c.thirdPartyConfig.useDweet) + "<br>\n";
+  body += getString("dweetThing", "Dweet Thing", c.thirdPartyConfig.dweetThing) + "<br>\n";
   body += String(IntegrationFormFooter);
 
   return body;

@@ -54,21 +54,17 @@ void GardenServer::handleRoot() {
 
 void GardenServer::handleSettings() {
   Serial.print("handleSettings: "); Serial.println(server.uri());
-  // Integration settings
+  
+  // Process submitted settings
   if (server.uri() == "/submitIntegrationSettings") {
     processIntegrationResults(server, globals);
     saveConfig(globals);
+    globals.pinsInitialized = false;
   }
-
-  if (server.uri() == "/submitPinSettings") {
+  else if (server.uri() == "/submitPinSettings") {
     processPinResults(server, globals);
-    if (server.args() > 0 ) {
-      for ( uint8_t i = 0; i < server.args(); i++ ) {
-        Serial.println(server.argName(i) + ": " + server.arg(i));
-       }
-    }
-    //processIntegrationResults(server, globals);
-    //saveConfig(globals);
+    saveConfig(globals);
+    globals.pinsInitialized = false;
   }
   
   if (server.uri() == "/submitIntegrationSettings" || server.uri() == "/integrationSettings") {

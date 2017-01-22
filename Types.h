@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include <stdint.h>
+#define PIN_NAME_LEN 32
 
 enum PinType {
   Disabled,
@@ -47,8 +48,8 @@ struct OutputConfig {
 
 struct Pin {
   Pin(uint8_t num) : pinNumber(num), type(Disabled) {};
-
-  char name[32];
+  
+  char name[PIN_NAME_LEN];
   const uint8_t pinNumber;
   PinType type;
 

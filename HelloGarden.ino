@@ -20,12 +20,17 @@ GardenServer gardenServer(globals);
 // Helper objects
 ThirdPartyIntegrations integrations(globals.thirdPartyConfig);
 
+bool customInitialization(Config& config) {
+  return false;
+
+  globals.pins[0].type = Input_TempSensorDHT11;
+}
 // Setup server.
 void setup(void){
   SPIFFS.begin();
-  //loadConfig(globals);
-
-  globals.pins[0].type = Input_TempSensorDHT11;
+  if (!customInitialization(globals)) {
+    loadConfig(globals);
+  }
   
   globals.pinsInitialized = false;
   
@@ -61,13 +66,15 @@ void initializePins() {
   if (!globals.pinsInitialized) {
     //pinMode(globals.ledPin, OUTPUT);
 
+    dhtReaders.clear();
+    
     // Initialize the pins
     //int numPins = sizeof(globals.pins)/sizeof(*(globals.pins));
     int numPins = NUM_PINS;
     for (int i = 0; i < numPins; i++) {
       switch (globals.pins[i].type) {
         case Input_TempSensorDHT11:
-          Serial.println("CREATING DHT11");
+          Serial.print("CREATING DHT11 ON PIN: "); Serial.println(i+1);
           pinMode(globals.pins[i].pinNumber, INPUT);
           dhtReaders.push_back(DhtReader(globals.pins[i], DHT11, 16, globals.minSensorIntervalMs));
           break;
@@ -94,8 +101,9 @@ void initializePins() {
 unsigned long previousUploadMillis = 0;
 void uploadData() {
   unsigned long currentMillis = millis();
- 
   if(currentMillis - previousUploadMillis >= globals.uploadInterval) {
+    Serial.println(String("Interval: ") + globals.uploadInterval);
+
     std::vector<dht_data> dataVector;
     bool failed = false;
     for (int i=0; !failed && i < dhtReaders.size(); i++) {
@@ -119,6 +127,9 @@ void uploadData() {
     // If we got a good reading, reset the previous upload time.
     if (!failed) {
       previousUploadMillis = currentMillis;
+    } else {
+      // Don't try more than once a second.
+      previousUploadMillis += 1000;
     }
   }
 }
