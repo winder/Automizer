@@ -72,6 +72,11 @@ void GardenServer::handleSettings() {
     saveConfig(globals);
     globals.pinsInitialized = false;
   }
+  else if (server.uri() == "/submitPinSettingsJson") {
+    processPinJsonResults(server, globals);
+    saveConfig(globals);
+    globals.pinsInitialized = false;
+  }
   
   if (server.uri() == "/submitIntegrationSettings" || server.uri() == "/integrationSettings") {
     ProcessorCallback cb = BIND_PROCESSOR(settingsProcessor);

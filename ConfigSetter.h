@@ -14,6 +14,7 @@ String getIntegrationSettingsBody(const Config& c);
 
 bool processIntegrationResults(ESP8266WebServer& server, Config& c);
 bool processPinResults(ESP8266WebServer& server, Config& c);
+bool processPinJsonResults(ESP8266WebServer& server, Config& c);
 
 void loadConfig(Config& c);
 

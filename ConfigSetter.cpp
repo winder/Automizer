@@ -90,6 +90,18 @@ bool processPinResults(ESP8266WebServer& server, Config& c) {
   // Second pass, pinType advanced settings knowing that the type is now set.
 }
 
+bool processPinJsonResults(ESP8266WebServer& server, Config& c) {
+  if (server.args() > 0 ) {
+      for ( uint8_t i = 0; i < server.args(); i++ ) {
+        Serial.println(server.argName(i) + ": " + server.arg(i));
+     }
+  }
+
+  if (server.hasArg("plain")) {
+    Serial.println("Plain: \n" + server.arg("plain"));
+  }
+}
+
 String getIntegrationSettingsBody(const Config& c) {
   String body = String(IntegrationFormHeader);
   body += getCheckbox("useThingSpeak", "Use ThingSpeak", c.thirdPartyConfig.useThingSpeak) + "<br>\n";
