@@ -1,5 +1,6 @@
 #include "ConfigSetter.h"
 #include <FS.h>
+#include <cstring>
 
 String getCheckbox(String name, String description, bool checked) {
   return "<input type='checkbox' name='" + name + "'" + (checked ? " checked> ":"> ") + description + "\n";
@@ -63,15 +64,30 @@ PinType stringToPinType(String t) {
 }
 
 bool processPinResults(ESP8266WebServer& server, Config& c) {
+  bool typeChanged[NUM_PINS];
+
+  // First pass, get global settings and save changed flag.
   for ( uint8_t i = 0; i < server.args(); i++ ) {
     int idx = server.argName(i).charAt(0) - '0';
-    if (server.argName(i).length() == 1 && idx < NUM_PINS && idx > -1) {
-      c.pins[idx].type = stringToPinType(server.arg(i));
-    }
-    if (server.argName(i).endsWith("_name") && idx < NUM_PINS && idx > -1) {
-      strncpy(c.pins[idx].name, server.arg(i).c_str(), PIN_NAME_LEN);
+    if (idx < NUM_PINS && idx > -1) {
+      //Pin& p = &(c.pins[idx]);
+      
+      // pin type
+      if (server.argName(i).length() == 1) {
+        PinType newType = stringToPinType(server.arg(i));
+        if (c.pins[idx].type != newType) {
+          c.pins[idx].type = newType;
+          std::memset(c.pins[idx].reserved, 0, sizeof c.pins[idx].reserved);
+        }
+      }
+      // pin name
+      if (server.argName(i).endsWith("_name")) {
+        strncpy(c.pins[idx].name, server.arg(i).c_str(), PIN_NAME_LEN);
+      }
     }
   }
+
+  // Second pass, pinType advanced settings knowing that the type is now set.
 }
 
 String getIntegrationSettingsBody(const Config& c) {

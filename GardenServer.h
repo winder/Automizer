@@ -34,7 +34,8 @@ class GardenServer {
     String settingsLinksProcessor(const String& key);
     String settingsProcessor(const String& key);
     String settingsPinProcessor(const String& key);
-
+    String settingsPinJsonProcessor(const String& key);
+    
     ESP8266WebServer server;
     Config& globals;
     //DhtReader& dht;

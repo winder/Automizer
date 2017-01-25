@@ -1,0 +1,196 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>%%%TITLE%</title>
+      <style>
+%%%INCLUDE:/jsonform_deps/bootstrap.css%
+      </style>
+  </head>
+  <body>
+    <h1>%%%TITLE%</h1>
+    <form></form>
+    <div id="res" class="alert"></div>
+    <script type="text/javascript">
+%%%INCLUDE:/jsonform_deps/jquery.min.js%
+    </script>
+    <script type="text/javascript">
+%%%INCLUDE:/jsonform_deps/underscore.js%
+    </script>
+    <script type="text/javascript">
+%%%INCLUDE:/jsonform_deps/jsonform.js%
+    </script>
+    <script type="text/javascript">
+      $('form').jsonForm({
+
+        "schema": {
+    "pins": {
+      "type": "array",
+      "minItems": %%%NUM_PINS%,
+      "maxItems": %%%NUM_PINS%,
+      "items": {
+        "type": "object",
+        "title": "Pin {{idx}} Settings",
+        "properties": {
+          "pin_number": {
+            "type": "number",
+            "default": "{{idx}}"
+          },
+          "name": {
+            "type": "string",
+            "title": "Pin name"
+          },
+          "type": {
+            "type": "string",
+            "enum": [ "disabled", "dht11", "dht22", "relay" ]
+          },
+          "trigger": {
+            "type": "string",
+            "title": "Trigger",
+            "enum": [
+              "manual",
+              "schedule",
+              "environment"
+            ]
+          },
+          "trigger_schedule_start": {
+            "type": "string",
+            "title": "Start Time"
+          },
+          "trigger_schedule_stop": {
+            "type": "string",
+            "title": "Stop Time"
+          },
+          "trigger_temperature_pin": {
+            "type": "number",
+            "title": "Pin number of the sensor which should be used for this trigger."
+          },
+          "trigger_temperature_event": {
+            "type": "string",
+            "title": "Temperature trigger",
+            "enum": ["None", "Above", "Below"]
+          },
+          "trigger_temperature_f": {
+            "type": "number",
+            "title": "Degrees farenheit to trigger at."
+          },
+          "trigger_humidity_event": {
+            "type": "string",
+            "title": "Humidity trigger",
+            "enum": ["None", "Above", "Below"]
+          },
+          "trigger_humidity_percent": {
+            "type": "number",
+            "title": "Relative humidity percentage to trigger at."
+          }
+        }
+      }
+    }
+  },
+  "form": [
+    {
+      "type": "tabarray",
+      "key": "pins",
+      "items": [
+        {
+          "type": "section",
+          "legend": "Pin {{idx}}",
+          "items": [
+            {
+              "key": "pins[].pin_number",
+              "type": "hidden"
+            },
+            {
+              "key": "pins[].name",
+              "valueInLegend": true
+            },
+            {
+              "type": "selectfieldset",
+              "key": "pins[].type",
+              "title": "Make a choice",
+              "titleMap": {
+                "disabled": "Disabled",
+                "dht11": "Temperature Input (DHT11)",
+                "dht22": "Temperature Input (DHT22)",
+                "relay": "Relay"
+              },
+              "items": [
+                {
+                  "type": "help",
+                  "helpvalue": "<strong><em>This pin is disabled</em></strong>"
+                },
+                {
+                  "type": "help",
+                  "helpvalue": "<strong><em>Temperature Input's do not need additional configuration.</em></strong>"
+                },
+                {
+                  "type": "help",
+                  "helpvalue": "<strong><em>Temperature Input's do not need additional configuration.</em></strong>"
+                },
+                {
+                  "type": "selectfieldset",
+                  "key": "pins[].trigger",
+                  "title": "Make a choice",
+                  "titleMap": {
+                    "manual": "Manual",
+                    "schedule": "Time Scheduled",
+                    "environment": "Temperature / Humidity"
+                  },
+                  "items": [
+                    {
+                      "type": "help",
+                      "helpvalue": "<strong><em>This pin can be enabled or disabled on the manual settings page.</em></strong>"
+                    },
+                    {
+                      "type": "section",
+                      "title": "Author",
+                      "items": [
+                        {
+                          "key": "pins[].trigger_schedule_start",
+                          "type": "time"
+                        },
+                        {
+                          "key": "pins[].trigger_schedule_stop",
+                          "type": "time"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "title": "Author",
+                      "items": [
+                        "pins[].trigger_temperature_pin",
+                        "pins[].trigger_temperature_event",
+                        "pins[].trigger_temperature_f",
+                        "pins[].trigger_humidity_event",
+                        "pins[].trigger_humidity_percent"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "submit",
+      "title": "Submit"
+    }
+  ]
+
+        ,
+        onSubmit: function (errors, values) {
+          if (errors) {
+            $('#res').html('<p>I beg your pardon?</p>');
+          }
+          else {
+            window.alert('Form submitted. Values object:\n' +
+              JSON.stringify(values, null, 2));
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
+

@@ -24,6 +24,7 @@ bool customInitialization(Config& config) {
   return false;
 
   globals.pins[0].type = Input_TempSensorDHT11;
+  globals.pins[1].type = Output_Relay;
 }
 // Setup server.
 void setup(void){

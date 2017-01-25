@@ -13,6 +13,7 @@ void GardenServer::setup() {
       server.on("/settings", BIND(handleSettings));
       server.on("/integrationSettings", BIND(handleSettings));
       server.on("/pinSettings", BIND(handleSettings));
+      server.on("/pinSettingsJson", BIND(handleSettings));
       server.on("/dht", BIND(handleSensor));
       server.on("/relay1", BIND(handleToggleRelay1));
       server.on("/argTest1", BIND(handleGenericArgs));
@@ -34,6 +35,11 @@ String GardenServer::settingsProcessor(const String& key) {
 String GardenServer::settingsPinProcessor(const String& key) {
   if (key == "TITLE") return "Gardenbot Pin Settings";
   else if (key == "BODY") return getPinSettingsBody(globals);
+}
+
+String GardenServer::settingsPinJsonProcessor(const String& key) {
+  if (key == "TITLE") return "Gardenbot Pin Settings";
+  else if (key == "NUM_PINS") return String(NUM_PINS, DEC);
 }
 
 String GardenServer::settingsLinksProcessor(const String& key) {
@@ -90,7 +96,18 @@ void GardenServer::handleSettings() {
     }
     return;
   }
-  
+
+  if (server.uri() == "/submitPinSettingsJson" || server.uri() == "/pinSettingsJson") {
+    ProcessorCallback cb = BIND_PROCESSOR(settingsPinJsonProcessor);
+    if (ESPTemplateProcessor(server).send(String("/PinSettings.html"), cb)) {
+      Serial.println("SUCCESS");
+      return;
+    } else {
+      Serial.println("FAIL");
+      handleRoot();
+    }
+    return;
+  }
   ProcessorCallback cb = BIND_PROCESSOR(settingsLinksProcessor);
   if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
     Serial.println("SUCCESS");
