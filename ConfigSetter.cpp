@@ -15,7 +15,7 @@ String getNumber(String name, String description, String value) {
 }
 
 String getSettingsLinksBody() {
-  return SettingsLinks;
+  return "<a href='/integrationSettings'>Integration Settings</a>\n<br>\n<a href='/pinSettings'>Pin Settings</a>";
 }
 
 String getEnumName(PinType type) {
@@ -103,7 +103,7 @@ bool processPinJsonResults(ESP8266WebServer& server, Config& c) {
 }
 
 String getIntegrationSettingsBody(const Config& c) {
-  String body = String(IntegrationFormHeader);
+  String body = "<h1>Integration Settings</h1><form action='/submitIntegrationSettings' method='POST'>\n";
   body += getCheckbox("useThingSpeak", "Use ThingSpeak", c.thirdPartyConfig.useThingSpeak) + "<br>\n";
   body += getString("thingSpeakKey", "ThingSpeak Key", c.thirdPartyConfig.thingSpeakKey) + "<br>\n";
   body += getString("thingSpeakChannel", "ThingSpeak Channel", String(c.thirdPartyConfig.thingSpeakChannel)) + "<br>\n";
@@ -116,7 +116,7 @@ String getIntegrationSettingsBody(const Config& c) {
   body += "<br>\n";
   body += getCheckbox("useDweet", "Use Dweet", c.thirdPartyConfig.useDweet) + "<br>\n";
   body += getString("dweetThing", "Dweet Thing", c.thirdPartyConfig.dweetThing) + "<br>\n";
-  body += String(IntegrationFormFooter);
+  body += "<input type='submit' value='Submit'></form>";
 
   return body;
 }
