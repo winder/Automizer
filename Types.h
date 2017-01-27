@@ -26,9 +26,21 @@ enum OutputTrigger {
   OutputTrigger_Manual,
 };
 
+enum SensorTriggerType {
+  SensorTriggerType_Disabled,
+  SensorTriggerType_Above,
+  SensorTriggerType_Below
+};
+
 struct TemperatureTriggerConfig {
-  uint32_t lower;
-  uint32_t upper;
+  // Which DHT11/DHT22 input sensor to get data from.
+  uint8_t sensorIndex;
+  
+  SensorTriggerType temperatureTrigger;
+  uint32_t temperatureThreshold;
+  
+  SensorTriggerType humidityTrigger;
+  uint32_t humidityThreshold;
 };
 
 struct ScheduleTriggerConfig {

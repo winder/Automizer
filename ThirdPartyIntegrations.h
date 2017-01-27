@@ -1,17 +1,29 @@
 #ifndef THIRD_PARTY_INTEGRATIONS_H
 #define THIRD_PARTY_INTEGRATIONS_H
 
+#include <BlynkSimpleEsp8266.h>
+#include <utility>
+#include <vector>
+
 #include "ThingSpeak.h"
 #include "Config.h"
-#include <BlynkSimpleEsp8266.h>
 
 class ThirdPartyIntegrations {
+      
+  private:
+    int thingSpeakFailedCounter;
+
+    // Key-Value pair that needs to be sent
+    std::vector<std::pair<String, String>> stagedData;
+
+    // Reference to global settings.
+    ThirdPartyConfig& conf;
+    
   public:
     ThirdPartyIntegrations(ThirdPartyConfig& config) :
         conf(config),
         thingSpeakFailedCounter(0)
-    {
-    }
+    {}
 
     void upload(String temperature, String humidity) {
       Serial.println("UPLOAD DATA");
@@ -20,6 +32,28 @@ class ThirdPartyIntegrations {
       if (conf.useBlynk)       sendBlynk(temperature, humidity);
       if (conf.usePushingBox)  sendPushingBox(temperature, humidity);
       if (conf.useDweet)       sendDweet(temperature, humidity);
+    }
+
+    void uploadStagedData() {
+      Serial.println(String("Staged data size: ") + stagedData.size());
+      // ???
+      resetStagedData();
+    }
+
+    void resetStagedData() {
+      stagedData.clear();
+    }
+    
+    void stage(String key, String value) {
+      stagedData.push_back(std::make_pair(key, value));
+    }
+
+    void stage(String key, int value) {
+      stage(key, String(value, DEC));
+    }
+
+    void stage(String key, float value) {
+      stage(key, String(value, DEC));
     }
 
   private:
@@ -155,12 +189,6 @@ class ThirdPartyIntegrations {
   
     client.stop();
   }
-    
-  private:
-    int thingSpeakFailedCounter;
-
-    // Reference to global settings.
-    ThirdPartyConfig& conf;
 };
 
 #endif

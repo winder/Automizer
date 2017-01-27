@@ -31,9 +31,9 @@ class Enabler {
         switch (pins[i].type) {
           case PinType_Input_TempSensorDHT11:
           case PinType_Input_TempSensorDHT22:
-            Serial.println("ENABLER");
-            Serial.println(String("F: ") + pins[i].tempData.temp_f);
-            Serial.println(String("H: ") + pins[i].tempData.humidity);            
+            //Serial.println("ENABLER");
+            //Serial.println(String("F: ") + pins[i].tempData.temp_f);
+            //Serial.println(String("H: ") + pins[i].tempData.humidity);            
             break;
         }
       }

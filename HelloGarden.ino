@@ -29,8 +29,10 @@ Enabler enabler(globals.pins, NUM_PINS);
 ThirdPartyIntegrations integrations(globals.thirdPartyConfig);
 
 bool customInitialization(Config& config) {
+  // Using a custom initialization until I get the json config setter/loader figured out.
   //return false;
 
+  globals.pins[0].type = PinType_Input_TempSensorDHT11;
   globals.pins[1].type = PinType_Input_TempSensorDHT11;
   globals.pins[2].type = PinType_Output_Relay;
 }
@@ -69,18 +71,24 @@ void setup(void){
 // Check for client connections and upload data on an interval.
 void loop(void){
   timeClient.update();
+  unsigned long timestamp = timeClient.getEpochTime();
   updateSettings();
   gardenServer.handleClient();
   //Serial.println(timeClient.getFormattedTime());
-  uploadData();
+  updateSensors(timestamp);
+  enabler.update(timestamp);
+  uploadData(timestamp);
 }
 
-
+// Check if the settings have been changed:
+// globals.configInitialized - dirty flag for general configuration
+// globals.pinsInitialized   - dirty flag for pin configuration
 void updateSettings() {
   if (!globals.configInitialized) {
     timeClient.setTimeOffset(globals.timZoneOffsetMinutes);
     globals.configInitialized = true;
   }
+  
   if (!globals.pinsInitialized) {
     dhtReaders.clear();
     
@@ -112,41 +120,77 @@ void updateSettings() {
   }
 }
 
+// TODO: Use a timer utility.
+unsigned long previousUploadSec = 0;
+void uploadData(unsigned long currentSec) {
+  // Sometimes things get funny when starting
+  if (previousUploadSec > currentSec) previousUploadSec = currentSec;
   
-unsigned long previousUploadMillis = 0;
-void uploadData() {
-  unsigned long currentMillis = millis();
-  if(currentMillis - previousUploadMillis >= globals.uploadInterval) {
-    Serial.println(String("Interval: ") + globals.uploadInterval);
-
-    bool failed = false;
-    for (int i=0; !failed && i < dhtReaders.size(); i++) {
+  if(currentSec - previousUploadSec >= globals.uploadInterval) {
+    Serial.println(String("========= upload ========="));
+    Serial.println(String("curr:     ") + currentSec + "\nprevious: " + previousUploadSec + "\ninterval: " + globals.uploadInterval
+    +"\ndifference: " + (currentSec - previousUploadSec));
+    
+    //Serial.println(String("Upload Data Interval: ") + globals.uploadInterval + ", " + currentMillis);    
+    
+    bool failed = true;
+    for (int i=0; i < dhtReaders.size(); i++) {
       std::pair<DhtReader,int>& dht = dhtReaders[i];
-      globals.pins[dht.second].tempData = dht.first.getTemperature();
+      // Only stage good data.
       if (!globals.pins[dht.second].tempData.failed) {
-        Serial.println("Good data received, uploading.");
-        Serial.println(String("F: ") + globals.pins[dht.second].tempData.temp_f);
-        Serial.println(String("H: ") + globals.pins[dht.second].tempData.humidity);
-        dht.first.dumpTempCache();
-    
-        //String t = String(data.temp_f, 2);
-        //String h = String(data.humidity, 2);
-    
-        //integrations.upload(t, h);
-      } else {
-        Serial.println("Failed to get temperature data.");
-        failed = true;
+        failed = false;
+        String name = String(globals.pins[dht.second].name);
+        integrations.stage(String("temp_") + name, globals.pins[dht.second].tempData.temp_f);
+        integrations.stage(String("humidity_") + name, globals.pins[dht.second].tempData.humidity);   
       }
     }
+    integrations.uploadStagedData();
 
-    enabler.update(1234);
-    // If we got a good reading, reset the previous upload time.
     if (!failed) {
-      previousUploadMillis = currentMillis;
+      previousUploadSec = currentSec;
     } else {
-      // Don't try more than once a second.
-      previousUploadMillis += 1000;
+      previousUploadSec += 1;
     }
   }
+}
+
+// TODO: Use a timer utility.
+unsigned long previousUpdateSec = 0;
+bool updateSensors(unsigned long currentSec) {
+  // Sometimes things get funny when starting
+  if (previousUpdateSec > currentSec) previousUpdateSec = currentSec;
+  
+  if(currentSec - previousUpdateSec >= globals.updateInterval) {
+    Serial.println(String("========= update ========="));
+    Serial.println(String("curr:     ") + currentSec + "\nprevious: " + previousUpdateSec + "\ninterval: " + globals.updateInterval
+    +"\ndifference: " + (currentSec - previousUpdateSec));
+    //Serial.println(String("Update Sensor Interval: ") + globals.updateInterval + ", " + currentMillis);
+
+    // Save sensor data to Pin struct
+    bool failed = false;
+    for (int i=0; i < dhtReaders.size(); i++) {
+      std::pair<DhtReader,int>& dht = dhtReaders[i];
+      globals.pins[dht.second].tempData = dht.first.getTemperature();
+      if (globals.pins[dht.second].tempData.failed) {
+        Serial.println(String("Failed to get temperature data for pin: ") + dht.second);
+        failed = true;
+      } else {
+        Serial.print("Pin: "); Serial.println(dht.second);
+        dht.first.dumpTempCache();
+      }
+    }
+    
+    if (!failed) {
+      // integrations.uploadStaged();
+      previousUpdateSec = currentSec;
+    } else {
+      // Don't try more than once a second.
+      previousUpdateSec += 1;
+    }
+    
+    return failed;
+  }
+  
+  return true;
 }
 

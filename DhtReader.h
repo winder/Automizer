@@ -32,8 +32,6 @@ class DhtReader {
 
       // If the interval has passed update the cached value.
       if(currentMillis - lastReadMs >= minReadIntervalMs) {
-        Serial.println("Reading DHT sensor.");
-    
         // save the last time you read the sensor 
         lastReadMs = currentMillis;
     
