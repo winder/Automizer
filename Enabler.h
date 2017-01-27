@@ -1,6 +1,7 @@
 #ifndef ENABLER_H
 #define ENABLER_H
 
+#include <cstring>
 #include "Config.h"
 #include "Types.h"
 
@@ -27,6 +28,9 @@ class Enabler {
         if (state[i].stale) {
           // set timestamp for next toggle
           state[i].stale = false;
+
+          // Reset data/configuration
+          std::memset(&(pins[i].data), 0, sizeof(pins[i].data));
         }
         switch (pins[i].type) {
           case PinType_Input_TempSensorDHT11:

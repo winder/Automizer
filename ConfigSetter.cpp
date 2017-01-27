@@ -77,7 +77,7 @@ bool processPinResults(ESP8266WebServer& server, Config& c) {
         PinType newType = stringToPinType(server.arg(i));
         if (c.pins[idx].type != newType) {
           c.pins[idx].type = newType;
-          std::memset(c.pins[idx].reserved, 0, sizeof c.pins[idx].reserved);
+          std::memset(&(c.pins[idx].data), 0, sizeof c.pins[idx].data);
         }
       }
       // pin name

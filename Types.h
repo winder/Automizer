@@ -66,6 +66,14 @@ struct OutputConfig {
 // Pin Data //
 //////////////
 
+// Store sensor data or output configuration.
+union PinData {
+  dht_data      tempData;
+  OutputConfig  outputConfig;
+  // 128 bytes reserved for configuration.
+  char          reserved[128];
+};
+
 struct Pin {
   Pin(uint8_t num) : pinNumber(num), type(PinType_Disabled) {};
 
@@ -73,13 +81,7 @@ struct Pin {
   const uint8_t pinNumber;
   PinType type;
 
-  // Store sensor data or output configuration.
-  union {
-    dht_data      tempData;
-    OutputConfig  outputConfig;
-    // 128 bytes reserved for configuration.
-    char          reserved[128];
-  };
+  PinData data;
 };
 
 #endif

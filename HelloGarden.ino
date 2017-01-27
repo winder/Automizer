@@ -127,21 +127,18 @@ void uploadData(unsigned long currentSec) {
   if (previousUploadSec > currentSec) previousUploadSec = currentSec;
   
   if(currentSec - previousUploadSec >= globals.uploadInterval) {
-    Serial.println(String("========= upload ========="));
-    Serial.println(String("curr:     ") + currentSec + "\nprevious: " + previousUploadSec + "\ninterval: " + globals.uploadInterval
-    +"\ndifference: " + (currentSec - previousUploadSec));
-    
-    //Serial.println(String("Upload Data Interval: ") + globals.uploadInterval + ", " + currentMillis);    
+    //Serial.println(String("========= upload ========="));
+    //Serial.println(String("curr:     ") + currentSec + "\nprevious: " + previousUploadSec + "\ninterval: " + globals.uploadInterval +"\ndifference: " + (currentSec - previousUploadSec));
     
     bool failed = true;
     for (int i=0; i < dhtReaders.size(); i++) {
       std::pair<DhtReader,int>& dht = dhtReaders[i];
       // Only stage good data.
-      if (!globals.pins[dht.second].tempData.failed) {
+      if (!globals.pins[dht.second].data.tempData.failed) {
         failed = false;
         String name = String(globals.pins[dht.second].name);
-        integrations.stage(String("temp_") + name, globals.pins[dht.second].tempData.temp_f);
-        integrations.stage(String("humidity_") + name, globals.pins[dht.second].tempData.humidity);   
+        integrations.stage(String("temp_") + name, globals.pins[dht.second].data.tempData.temp_f);
+        integrations.stage(String("humidity_") + name, globals.pins[dht.second].data.tempData.humidity);   
       }
     }
     integrations.uploadStagedData();
@@ -161,17 +158,15 @@ bool updateSensors(unsigned long currentSec) {
   if (previousUpdateSec > currentSec) previousUpdateSec = currentSec;
   
   if(currentSec - previousUpdateSec >= globals.updateInterval) {
-    Serial.println(String("========= update ========="));
-    Serial.println(String("curr:     ") + currentSec + "\nprevious: " + previousUpdateSec + "\ninterval: " + globals.updateInterval
-    +"\ndifference: " + (currentSec - previousUpdateSec));
-    //Serial.println(String("Update Sensor Interval: ") + globals.updateInterval + ", " + currentMillis);
+    //Serial.println(String("========= update ========="));
+    //Serial.println(String("curr:     ") + currentSec + "\nprevious: " + previousUpdateSec + "\ninterval: " + globals.updateInterval +"\ndifference: " + (currentSec - previousUpdateSec));
 
     // Save sensor data to Pin struct
     bool failed = false;
     for (int i=0; i < dhtReaders.size(); i++) {
       std::pair<DhtReader,int>& dht = dhtReaders[i];
-      globals.pins[dht.second].tempData = dht.first.getTemperature();
-      if (globals.pins[dht.second].tempData.failed) {
+      globals.pins[dht.second].data.tempData = dht.first.getTemperature();
+      if (globals.pins[dht.second].data.tempData.failed) {
         Serial.println(String("Failed to get temperature data for pin: ") + dht.second);
         failed = true;
       } else {
