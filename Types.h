@@ -1,25 +1,29 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <Arduino.h>
+#include <memory>
+
 #include <stdint.h>
 #define PIN_NAME_LEN 32
+#include "DhtReader.h"
 
 enum PinType {
-  Disabled,
-  Input_TempSensorDHT11,
-  Input_TempSensorDHT22,
-  Output_Relay  
+  PinType_Disabled,
+  PinType_Input_TempSensorDHT11,
+  PinType_Input_TempSensorDHT22,
+  PinType_Output_Relay  
 };
 
-enum TriggerType {
-  None,
-  Temperature,
-  Schedule,
-  Manual,
-};
+////////////
+// Output //
+////////////
 
-struct InputConfig {
-  
+enum OutputTrigger {
+  OutputTrigger_None,
+  OutputTrigger_Temperature,
+  OutputTrigger_Schedule,
+  OutputTrigger_Manual,
 };
 
 struct TemperatureTriggerConfig {
@@ -38,7 +42,7 @@ struct ManualTriggerConfig {
 
 
 struct OutputConfig {
-  TriggerType trigger;
+  OutputTrigger trigger;
   union {
     TemperatureTriggerConfig  tempConfig;
     ScheduleTriggerConfig     scheduleConfig;
@@ -46,15 +50,20 @@ struct OutputConfig {
   };
 };
 
+//////////////
+// Pin Data //
+//////////////
+
 struct Pin {
-  Pin(uint8_t num) : pinNumber(num), type(Disabled) {};
-  
+  Pin(uint8_t num) : pinNumber(num), type(PinType_Disabled) {};
+
   char name[PIN_NAME_LEN];
   const uint8_t pinNumber;
   PinType type;
 
+  // Store sensor data or output configuration.
   union {
-    InputConfig   inputConfig;
+    dht_data      tempData;
     OutputConfig  outputConfig;
     // 128 bytes reserved for configuration.
     char          reserved[128];

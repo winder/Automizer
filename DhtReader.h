@@ -2,7 +2,6 @@
 #define DHT_READER_H
 
 #include <DHT.h>
-#include "Types.h"
 
 // Data structures
 struct dht_data {
@@ -21,14 +20,13 @@ class DhtReader {
       // higher the value.  The default for a 16mhz AVR is a value of 6.  For an
       // Arduino Due that runs at 84mhz a value of 30 works.
       // This is for the ESP8266 processor on ESP-01 
-    DhtReader(Pin& sensorPin, int sensorType, int cycleCounts, unsigned long _minReadIntervalMs) :
-        pin(sensorPin),
-        dht(sensorPin.pinNumber, sensorType, cycleCounts),
+    DhtReader(int sensorPin, int sensorType, int cycleCounts, unsigned long _minReadIntervalMs) :
+        dht(sensorPin, sensorType, cycleCounts),
         minReadIntervalMs(_minReadIntervalMs),
         lastReadMs()
     {
     }
-
+    
     dht_data getTemperature() {  
       unsigned long currentMillis = millis();
 
@@ -63,7 +61,6 @@ class DhtReader {
     }
 
     private:
-      Pin& pin;
       DHT dht;
       unsigned long minReadIntervalMs;
       unsigned long lastReadMs;

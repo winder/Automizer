@@ -21,10 +21,10 @@ String getSettingsLinksBody() {
 String getEnumName(PinType type) {
   switch(type) {
     default:
-    case Disabled:              return "Disabled";
-    case Input_TempSensorDHT11: return "Temperature Input (DHT11)";
-    case Input_TempSensorDHT22: return "Temperature Input (DHT22)";
-    case Output_Relay:          return "Relay";                    
+    case PinType_Disabled:              return "Disabled";
+    case PinType_Input_TempSensorDHT11: return "Temperature Input (DHT11)";
+    case PinType_Input_TempSensorDHT22: return "Temperature Input (DHT22)";
+    case PinType_Output_Relay:          return "Relay";                    
   }
   return "Disabled";
 }
@@ -32,10 +32,10 @@ String getEnumName(PinType type) {
 String getPinCombo(String name, String description, PinType selected) {
   String field = description + ": ";
   field += "<select name='" + name + "'>\n";
-  field += "  <option value='disabled'" + String(((selected == Disabled) ? " selected>":">")) + getEnumName(Disabled) + "</option>\n";
-  field += "  <option value='dht11'" + String(((selected == Input_TempSensorDHT11) ? " selected>":">")) + getEnumName(Input_TempSensorDHT11) + "</option>\n";
-  field += "  <option value='dht22'" + String(((selected == Input_TempSensorDHT22) ? " selected>":">")) + getEnumName(Input_TempSensorDHT22) + "</option>\n";
-  field += "  <option value='relay'" + String(((selected == Output_Relay) ? " selected>":">")) + getEnumName(Output_Relay) + "</option>\n";
+  field += "  <option value='disabled'" + String(((selected == PinType_Disabled) ? " selected>":">")) + getEnumName(PinType_Disabled) + "</option>\n";
+  field += "  <option value='dht11'" + String(((selected == PinType_Input_TempSensorDHT11) ? " selected>":">")) + getEnumName(PinType_Input_TempSensorDHT11) + "</option>\n";
+  field += "  <option value='dht22'" + String(((selected == PinType_Input_TempSensorDHT22) ? " selected>":">")) + getEnumName(PinType_Input_TempSensorDHT22) + "</option>\n";
+  field += "  <option value='relay'" + String(((selected == PinType_Output_Relay) ? " selected>":">")) + getEnumName(PinType_Output_Relay) + "</option>\n";
   field += "</select>\n";
   return field;
 }
@@ -56,11 +56,11 @@ String getPinSettingsBody(const Config& c) {
 }
 
 PinType stringToPinType(String t) {
-  if (t == "disabled") return Disabled;
-  if (t == "dht11")    return Input_TempSensorDHT11;
-  if (t == "dht22")    return Input_TempSensorDHT22;
-  if (t == "relay")    return Output_Relay;
-  return Disabled;
+  if (t == "disabled") return PinType_Disabled;
+  if (t == "dht11")    return PinType_Input_TempSensorDHT11;
+  if (t == "dht22")    return PinType_Input_TempSensorDHT22;
+  if (t == "relay")    return PinType_Output_Relay;
+  return PinType_Disabled;
 }
 
 bool processPinResults(ESP8266WebServer& server, Config& c) {
@@ -166,7 +166,6 @@ void saveConfig(Config& c) {
     configFile.close();
   }
 }
-
 
 void loadConfig(Config& c) {
   File configFile = SPIFFS.open("/config.conf", "r");
