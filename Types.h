@@ -50,9 +50,10 @@ struct TemperatureTriggerConfig {
   uint32_t humidityThreshold;
 };
 
+// Minutes can be between 1 and 24 * 60 (number of minutes in a day)
 struct ScheduleTriggerConfig {
-  uint32_t start;
-  uint32_t stop;
+  uint16_t startMinutes;
+  uint16_t stopMinutes;
 };
 
 struct ManualTriggerConfig {

@@ -225,6 +225,7 @@ String sensorTriggerTypeToString(SensorTriggerType type) {
 }
 
 void dumpPin(Pin& p, int idx) {
+  Serial.println("-----------------------------");
   Serial.println(String("Pin ") + idx);
   Serial.println(String("Name:    ") + p.name);
   Serial.println(String("Number:  ") + p.pinNumber);
@@ -243,6 +244,8 @@ void dumpPin(Pin& p, int idx) {
         case OutputTrigger_None:
           break;
         case OutputTrigger_Schedule:
+          Serial.println(String("Start minutes: ") + p.data.outputConfig.scheduleConfig.startMinutes);
+          Serial.println(String("Stop minutes:  ") + p.data.outputConfig.scheduleConfig.stopMinutes);
           break;
         case OutputTrigger_Manual:
           break;
@@ -258,4 +261,5 @@ void dumpPin(Pin& p, int idx) {
     case PinType_Disabled:
       Serial.println("Disabled");
   }
+  Serial.println("-----------------------------");
 }

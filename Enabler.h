@@ -5,8 +5,9 @@
 #include "Config.h"
 #include "Types.h"
 #include "ConfigSetter.h"
+#include "NTPClient.h"
 
-#define TEMP_HYSTERESIS 2
+#define TEMP_HYSTERESIS 4
 class Enabler {
   private:
     struct pin_meta {
@@ -26,10 +27,16 @@ class Enabler {
   public:
     Enabler(PinArray& _pins, int _numPins) : pins(_pins), numPins(_numPins) {}
 
-    void update(unsigned long currentTimestamp) {
+    void update(NTPClient& timeClient) {
+      unsigned long currentTimestamp = timeClient.getEpochTime();
+      int hours = timeClient.getHours();
+      int minutes = timeClient.getMinutes();
+      
       // Don't run this too quickly.
       if (lastUpdate == currentTimestamp) return;
       lastUpdate = currentTimestamp;
+      
+      //Serial.println(timeClient.getFormattedTime());
       
       // Check for updates to config
       for (int i = 0; i < numPins; i++) {
@@ -40,43 +47,15 @@ class Enabler {
       for (int i = 0; i < numPins; i++) {
         switch (pins[i].type) {
           case PinType_Input_TempSensorDHT11:
-          case PinType_Input_TempSensorDHT22:
-            //Serial.println("ENABLER");
-            //Serial.println(String("F: ") + pins[i].tempData.temp_f);
-            //Serial.println(String("H: ") + pins[i].tempData.humidity);            
+          case PinType_Input_TempSensorDHT22:         
             break;
           case PinType_Output_Relay:
-
             OutputConfig& outConf = pins[i].data.outputConfig;
-            
-            switch(outConf.trigger) {
-              case OutputTrigger_Temperature:
-                {
-                  //Serial.println(String("Temprature Output Pin: ") + i + ", reading: " + outConf.tempConfig.sensorIndex);
-                  dht_data& data = pins[outConf.tempConfig.sensorIndex].data.tempData;
-                  //Serial.println(String("Sensor temp = ") + data.temp_f + ", humidity = " + data.humidity + ", failed = " + data.failed);
-
-                  if (!data.failed) {
-                    //Serial.println(String("Sensor temp = ") + data.temp_f + ", humidity = " + data.humidity + ", failed = " + data.failed);
-                    //dumpPin(pins[4], 4);
-                    
-                    bool tempEnabled = isEnabled(outConf.tempConfig.temperatureTrigger, state[i].enabled, outConf.tempConfig.temperatureThreshold, data.temp_f);
-                    bool humidityEnabled = isEnabled(outConf.tempConfig.humidityTrigger, state[i].enabled, outConf.tempConfig.humidityThreshold, data.humidity);
-                    bool enabled = tempEnabled || humidityEnabled;
-                    if (state[i].enabled != enabled) {
-                      Serial.println(String("ENABLER Pin ") + i + ", changing to: " + enabled);
-                      state[i].enabled = enabled;
-                      digitalWrite(pins[i].pinNumber, enabled ? ON : OFF);
-                    }
-                  }
-                }
-                break;
-              case OutputTrigger_Schedule:
-                break;
-              case OutputTrigger_Manual:
-                break;
-              case OutputTrigger_None:
-                break;
+            bool enabled = checkPin(pins[i], outConf, i, hours, minutes);
+            if (state[i].enabled != enabled) {
+              Serial.println(String("ENABLER - Pin ") + i + ", changing to: " + enabled);
+              state[i].enabled = enabled;
+              digitalWrite(pins[i].pinNumber, enabled ? ON : OFF);
             }
             break;
         }
@@ -90,7 +69,6 @@ class Enabler {
       if (meta.stale == false) return;
       
       // Reset data/configuration
-      Serial.println(String("Pin update, stale = ") + meta.stale);
       meta.enabled = false;
 
       switch (p.type) {
@@ -127,6 +105,41 @@ class Enabler {
       }
     }
 
+    bool checkPin(Pin& p, OutputConfig& out, int i, int hours, int minutes) {
+      switch(out.trigger) {
+        case OutputTrigger_Temperature:
+          {
+            dht_data& data = pins[out.tempConfig.sensorIndex].data.tempData;
+            if (!data.failed) {
+              bool tempEnabled = isEnabled(out.tempConfig.temperatureTrigger, state[i].enabled, out.tempConfig.temperatureThreshold, data.temp_f);
+              bool humidityEnabled = isEnabled(out.tempConfig.humidityTrigger, state[i].enabled, out.tempConfig.humidityThreshold, data.humidity);
+              return tempEnabled || humidityEnabled;
+            }
+          }
+          break;
+        case OutputTrigger_Schedule:
+          {
+            int curMinutes = hours * 60 + minutes;
+            ScheduleTriggerConfig& conf = out.scheduleConfig;
+
+            // Off at beginning and end of day.
+            if (conf.startMinutes < conf.stopMinutes) {
+              return conf.startMinutes <= curMinutes && curMinutes < conf.stopMinutes;
+            }
+            // Off in the middle of the day
+            else {
+              return conf.startMinutes <= curMinutes || curMinutes < conf.stopMinutes;
+            }
+          }
+          break;
+        case OutputTrigger_Manual:
+          break;
+        case OutputTrigger_None:
+          break;
+      }
+      return false;
+    }
+    
     // Metadata used to determine if the pin needs to toggle.
     pin_meta state[NUM_PINS]; 
 

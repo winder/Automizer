@@ -52,9 +52,15 @@ Serial.println("initializing...");
   globals.pins[5].data.outputConfig.tempConfig.humidityTrigger = SensorTriggerType_Disabled;
   globals.pins[5].data.outputConfig.tempConfig.humidityThreshold = 50;
 
+  globals.pins[6].type = PinType_Output_Relay;
+  globals.pins[6].data.outputConfig.trigger = OutputTrigger_Schedule;
+  globals.pins[6].data.outputConfig.scheduleConfig.startMinutes = 61;
+  globals.pins[6].data.outputConfig.scheduleConfig.stopMinutes = 62;
+
   dumpPin(globals.pins[0], 0);
   dumpPin(globals.pins[4], 4);
   dumpPin(globals.pins[5], 5);
+  dumpPin(globals.pins[6], 6);
 }
 
 // Setup server.
@@ -95,7 +101,7 @@ void loop(void){
   updateSettings();
   gardenServer.handleClient();
   //Serial.println(timeClient.getFormattedTime());
-  enabler.update(timestamp);
+  enabler.update(timeClient);
   updateSensors(timestamp);
   //uploadData(timestamp);
   return;
@@ -106,7 +112,7 @@ void loop(void){
 // globals.pinsInitialized   - dirty flag for pin configuration
 void updateSettings() {
   if (!globals.configInitialized) {
-    timeClient.setTimeOffset(globals.timZoneOffsetMinutes);
+    timeClient.setTimeOffset(globals.timZoneOffsetMinutes * 60);
     globals.configInitialized = true;
   }
   

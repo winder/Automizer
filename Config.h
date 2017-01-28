@@ -43,7 +43,7 @@ struct Config {
   /////////////////////////
   bool configInitialized = false;
   
-  uint32_t timZoneOffsetMinutes = -5 * 60; // EST (no daylight savings)
+  int32_t timZoneOffsetMinutes = -5 * 60; // EST (no daylight savings)
 
   // Interval between updating sensors
   long updateInterval = 60 * 1; // 1 min
