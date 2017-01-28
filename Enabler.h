@@ -4,6 +4,7 @@
 #include <cstring>
 #include "Config.h"
 #include "Types.h"
+#include "ConfigSetter.h"
 
 #define TEMP_HYSTERESIS 2
 class Enabler {
@@ -26,6 +27,10 @@ class Enabler {
     Enabler(PinArray& _pins, int _numPins) : pins(_pins), numPins(_numPins) {}
 
     void update(unsigned long currentTimestamp) {
+      // Don't run this too quickly.
+      if (lastUpdate == currentTimestamp) return;
+      lastUpdate = currentTimestamp;
+      
       // Check for updates to config
       for (int i = 0; i < numPins; i++) {
         updateStateConfig(pins[i], state[i], currentTimestamp);
@@ -43,21 +48,26 @@ class Enabler {
           case PinType_Output_Relay:
 
             OutputConfig& outConf = pins[i].data.outputConfig;
-            Serial.println(String("relay ") + i + + ": " + pins[i].data.outputConfig.trigger);
-
+            
             switch(outConf.trigger) {
               case OutputTrigger_Temperature:
                 {
-                  Serial.println(String("Temprature Output Pin: ") + i + ", reading: " + outConf.tempConfig.sensorIndex);
+                  //Serial.println(String("Temprature Output Pin: ") + i + ", reading: " + outConf.tempConfig.sensorIndex);
                   dht_data& data = pins[outConf.tempConfig.sensorIndex].data.tempData;
-                  Serial.println(String("Sensor temp = ") + data.temp_f + ", humidity = " + data.humidity);
-                  bool tempEnabled = isEnabled(outConf.tempConfig.temperatureTrigger, state[i].enabled, outConf.tempConfig.temperatureThreshold, data.temp_f);
-                  bool humidityEnabled = isEnabled(outConf.tempConfig.humidityTrigger, state[i].enabled, outConf.tempConfig.humidityThreshold, data.humidity);
-                  bool enabled = tempEnabled || humidityEnabled;
-                  if (state[i].enabled != enabled) {
-                    Serial.println(String("ENABLER Pin ") + i + ", changing to: " + enabled);
-                    state[i].enabled = enabled;
-                    digitalWrite(pins[i].pinNumber, enabled ? ON : OFF);
+                  //Serial.println(String("Sensor temp = ") + data.temp_f + ", humidity = " + data.humidity + ", failed = " + data.failed);
+
+                  if (!data.failed) {
+                    //Serial.println(String("Sensor temp = ") + data.temp_f + ", humidity = " + data.humidity + ", failed = " + data.failed);
+                    //dumpPin(pins[4], 4);
+                    
+                    bool tempEnabled = isEnabled(outConf.tempConfig.temperatureTrigger, state[i].enabled, outConf.tempConfig.temperatureThreshold, data.temp_f);
+                    bool humidityEnabled = isEnabled(outConf.tempConfig.humidityTrigger, state[i].enabled, outConf.tempConfig.humidityThreshold, data.humidity);
+                    bool enabled = tempEnabled || humidityEnabled;
+                    if (state[i].enabled != enabled) {
+                      Serial.println(String("ENABLER Pin ") + i + ", changing to: " + enabled);
+                      state[i].enabled = enabled;
+                      digitalWrite(pins[i].pinNumber, enabled ? ON : OFF);
+                    }
                   }
                 }
                 break;
@@ -80,13 +90,15 @@ class Enabler {
       if (meta.stale == false) return;
       
       // Reset data/configuration
-      std::memset(&(p.data), 0, sizeof(p.data));
       Serial.println(String("Pin update, stale = ") + meta.stale);
       meta.enabled = false;
 
       switch (p.type) {
         case PinType_Input_TempSensorDHT11:
         case PinType_Input_TempSensorDHT22:
+          // Clear out sensor data for inputs
+          std::memset(&(p.data), 0, sizeof(p.data));
+          p.data.tempData.failed = true;
           break;
         case PinType_Output_Relay:
           meta.lastChange = 0;
@@ -120,6 +132,7 @@ class Enabler {
 
     // Reference to the pins.
     const int numPins;
+    unsigned long lastUpdate;
     PinArray& pins;
 };
 

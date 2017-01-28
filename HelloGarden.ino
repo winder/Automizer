@@ -32,6 +32,7 @@ bool customInitialization(Config& config) {
   // Using a custom initialization until I get the json config setter/loader figured out.
   //return false;
 
+Serial.println("initializing...");
   globals.pins[0].type = PinType_Input_TempSensorDHT11;
   globals.pins[1].type = PinType_Input_TempSensorDHT11;
   
@@ -40,29 +41,33 @@ bool customInitialization(Config& config) {
   globals.pins[4].data.outputConfig.tempConfig.sensorIndex = 1;
   globals.pins[4].data.outputConfig.tempConfig.temperatureTrigger = SensorTriggerType_Above;
   globals.pins[4].data.outputConfig.tempConfig.temperatureThreshold = 80;
-  globals.pins[4].data.outputConfig.tempConfig.humidityTrigger = SensorTriggerType_Above;
+  globals.pins[4].data.outputConfig.tempConfig.humidityTrigger = SensorTriggerType_Disabled;
   globals.pins[4].data.outputConfig.tempConfig.humidityThreshold = 50;
   
   globals.pins[5].type = PinType_Output_Relay;
   globals.pins[5].data.outputConfig.trigger = OutputTrigger_Temperature;
   globals.pins[5].data.outputConfig.tempConfig.sensorIndex = 1;
-  globals.pins[5].data.outputConfig.tempConfig.temperatureTrigger = SensorTriggerType_Above;
+  globals.pins[5].data.outputConfig.tempConfig.temperatureTrigger = SensorTriggerType_Below;
   globals.pins[5].data.outputConfig.tempConfig.temperatureThreshold = 80;
   globals.pins[5].data.outputConfig.tempConfig.humidityTrigger = SensorTriggerType_Disabled;
   globals.pins[5].data.outputConfig.tempConfig.humidityThreshold = 50;
+
+  dumpPin(globals.pins[0], 0);
+  dumpPin(globals.pins[4], 4);
+  dumpPin(globals.pins[5], 5);
 }
 
 // Setup server.
 void setup(void){
+  Serial.begin(115200);
+
   SPIFFS.begin();
   if (!customInitialization(globals)) {
     //loadConfig(globals);
   }
   
   globals.pinsInitialized = false;
-  globals.configInitialized = false;
-  
-  Serial.begin(115200);
+  globals.configInitialized = false;  
 
   //WiFiManager
   //Local intialization. Once its business is done, there is no need to keep it around
@@ -90,9 +95,10 @@ void loop(void){
   updateSettings();
   gardenServer.handleClient();
   //Serial.println(timeClient.getFormattedTime());
-  updateSensors(timestamp);
   enabler.update(timestamp);
-  uploadData(timestamp);
+  updateSensors(timestamp);
+  //uploadData(timestamp);
+  return;
 }
 
 // Check if the settings have been changed:

@@ -10,7 +10,6 @@
 // For dht_data struct definition
 #include "DhtReader.h"
 
-
 #ifdef ESP8266
 # define ON false
 # define OFF true
