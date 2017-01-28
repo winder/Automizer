@@ -6,7 +6,15 @@
 
 #include <stdint.h>
 #define PIN_NAME_LEN 32
+
+// For dht_data struct definition
 #include "DhtReader.h"
+
+
+#ifdef ESP8266
+# define ON false
+# define OFF true
+#endif
 
 enum PinType {
   PinType_Disabled,

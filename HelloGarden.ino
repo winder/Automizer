@@ -34,7 +34,22 @@ bool customInitialization(Config& config) {
 
   globals.pins[0].type = PinType_Input_TempSensorDHT11;
   globals.pins[1].type = PinType_Input_TempSensorDHT11;
-  globals.pins[2].type = PinType_Output_Relay;
+  
+  globals.pins[4].type = PinType_Output_Relay;
+  globals.pins[4].data.outputConfig.trigger = OutputTrigger_Temperature;
+  globals.pins[4].data.outputConfig.tempConfig.sensorIndex = 1;
+  globals.pins[4].data.outputConfig.tempConfig.temperatureTrigger = SensorTriggerType_Above;
+  globals.pins[4].data.outputConfig.tempConfig.temperatureThreshold = 80;
+  globals.pins[4].data.outputConfig.tempConfig.humidityTrigger = SensorTriggerType_Above;
+  globals.pins[4].data.outputConfig.tempConfig.humidityThreshold = 50;
+  
+  globals.pins[5].type = PinType_Output_Relay;
+  globals.pins[5].data.outputConfig.trigger = OutputTrigger_Temperature;
+  globals.pins[5].data.outputConfig.tempConfig.sensorIndex = 1;
+  globals.pins[5].data.outputConfig.tempConfig.temperatureTrigger = SensorTriggerType_Above;
+  globals.pins[5].data.outputConfig.tempConfig.temperatureThreshold = 80;
+  globals.pins[5].data.outputConfig.tempConfig.humidityTrigger = SensorTriggerType_Disabled;
+  globals.pins[5].data.outputConfig.tempConfig.humidityThreshold = 50;
 }
 
 // Setup server.
@@ -109,6 +124,7 @@ void updateSettings() {
         case PinType_Output_Relay:
           Serial.println("CREATING RELAY");
           pinMode(globals.pins[i].pinNumber, OUTPUT);
+          digitalWrite(globals.pins[i].pinNumber, OFF);
           // TODO: Configure relay triggers
           break;
         default:

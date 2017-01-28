@@ -44,15 +44,24 @@ class ThirdPartyIntegrations {
       stagedData.clear();
     }
     
-    void stage(String key, String value) {
+    void stage(String& key, String value) {
+      // sanitize the key
+      String k = String(key);
+      for (int i = 0; i < k.length(); i++) {
+        if (k[i] == ' ') k[i] = '_';
+        if (isalnum(k[i]) == 0) {
+          k.remove(i);
+          i--;
+        }
+      }
       stagedData.push_back(std::make_pair(key, value));
     }
 
-    void stage(String key, int value) {
+    void stage(String& key, int value) {
       stage(key, String(value, DEC));
     }
 
-    void stage(String key, float value) {
+    void stage(String& key, float value) {
       stage(key, String(value, DEC));
     }
 
