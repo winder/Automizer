@@ -55,7 +55,7 @@ Serial.println("initializing...");
   globals.pins[6].type = PinType_Output_Relay;
   globals.pins[6].data.outputConfig.trigger = OutputTrigger_Schedule;
   globals.pins[6].data.outputConfig.scheduleConfig.startMinutes = 61;
-  globals.pins[6].data.outputConfig.scheduleConfig.stopMinutes = 62;
+  globals.pins[6].data.outputConfig.scheduleConfig.stopMinutes = 21;
 
   dumpPin(globals.pins[0], 0);
   dumpPin(globals.pins[4], 4);
@@ -124,17 +124,17 @@ void updateSettings() {
     for (int i = 0; i < numPins; i++) {
       switch (globals.pins[i].type) {
         case PinType_Input_TempSensorDHT11:
-          Serial.print("CREATING DHT11 ON PIN: "); Serial.println(i+1);
+          Serial.println(String("Creating DHT11 on pin: ") + (i+1));
           pinMode(globals.pins[i].pinNumber, INPUT);
           dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT11, 16, globals.minSensorIntervalMs), i));
           break;
         case PinType_Input_TempSensorDHT22:
-          Serial.println("CREATING DHT22");
+          Serial.println(String("Creating DHT11 on pin: ") + (i+1));
           pinMode(globals.pins[i].pinNumber, INPUT);
           dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT22, 16, globals.minSensorIntervalMs), i));
           break;
         case PinType_Output_Relay:
-          Serial.println("CREATING RELAY");
+          Serial.println(String("Creating RELAY on pin: ") + (i+1));
           pinMode(globals.pins[i].pinNumber, OUTPUT);
           digitalWrite(globals.pins[i].pinNumber, OFF);
           // TODO: Configure relay triggers
