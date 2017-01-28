@@ -19,4 +19,11 @@ void loadConfig(Config& c);
 
 void saveConfig(Config& c);
 
+
+
+String pinTypeToString(PinType type);
+String outputTriggerToString(OutputTrigger trigger);
+String sensorTriggerTypeToString(SensorTriggerType type);
+void dumpPin(Pin& p, int idx);
+
 #endif

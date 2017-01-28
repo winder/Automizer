@@ -190,3 +190,72 @@ void loadConfig(Config& c) {
   }
 }
 
+
+String pinTypeToString(PinType type) {
+  switch(type) {
+    case PinType_Disabled:
+      return "Disabled";
+    case PinType_Input_TempSensorDHT11:
+      return "DHT11";
+    case PinType_Input_TempSensorDHT22:
+      return "DHT22";
+    case PinType_Output_Relay:
+      return "Relay";
+  }
+  return "";
+}
+
+String outputTriggerToString(OutputTrigger trigger) {
+  switch(trigger) {
+    case OutputTrigger_None: return "None";
+    case OutputTrigger_Temperature: return "Temperature";
+    case OutputTrigger_Schedule: return "Schedule";
+    case OutputTrigger_Manual: return "Manual";
+  }
+  return "";
+}
+
+String sensorTriggerTypeToString(SensorTriggerType type) {
+  switch(type) {
+    case SensorTriggerType_Disabled: return "Disabled";
+    case SensorTriggerType_Above: return "Above";
+    case SensorTriggerType_Below: return "Below";
+  }
+  return "";
+}
+
+void dumpPin(Pin& p, int idx) {
+  Serial.println(String("Pin ") + idx);
+  Serial.println(String("Name:    ") + p.name);
+  Serial.println(String("Number:  ") + p.pinNumber);
+  Serial.println(String("Type:    ") + pinTypeToString(p.type));
+  
+  switch(p.type) {
+    case PinType_Input_TempSensorDHT11:
+      Serial.println(String("  F: ") + p.data.tempData.temp_f + ", H: " + p.data.tempData.humidity);
+      break;
+    case PinType_Input_TempSensorDHT22:
+      Serial.println(String("  F: ") + p.data.tempData.temp_f + ", H: " + p.data.tempData.humidity);
+      break;
+    case PinType_Output_Relay:
+      Serial.println(String("Trigger: ") + outputTriggerToString(p.data.outputConfig.trigger));
+      switch(p.data.outputConfig.trigger) {
+        case OutputTrigger_None:
+          break;
+        case OutputTrigger_Schedule:
+          break;
+        case OutputTrigger_Manual:
+          break;
+        case OutputTrigger_Temperature:
+          Serial.println(String("Sensor idx:       ") + p.data.outputConfig.tempConfig.sensorIndex);
+          Serial.println(String("Temp trigger:     ") + sensorTriggerTypeToString(p.data.outputConfig.tempConfig.temperatureTrigger));
+          Serial.println(String("Temp thresh:      ") + p.data.outputConfig.tempConfig.temperatureThreshold);
+          Serial.println(String("Humidity trigger: ") + sensorTriggerTypeToString(p.data.outputConfig.tempConfig.humidityTrigger));
+          Serial.println(String("Humidity thresh:  ") + p.data.outputConfig.tempConfig.humidityThreshold);
+          break;
+      }
+      break;
+    case PinType_Disabled:
+      Serial.println("Disabled");
+  }
+}
