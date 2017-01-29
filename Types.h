@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <memory>
+#include <ArduinoJson.h>
 
 #include <stdint.h>
 #define PIN_NAME_LEN 32
@@ -78,8 +79,6 @@ struct OutputConfig {
 union PinData {
   dht_data      tempData;
   OutputConfig  outputConfig;
-  // 128 bytes reserved for configuration.
-  char          reserved[128];
 };
 
 struct Pin {
@@ -88,7 +87,6 @@ struct Pin {
   char name[PIN_NAME_LEN];
   const uint8_t pinNumber;
   PinType type;
-
   PinData data;
 };
 

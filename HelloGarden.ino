@@ -62,16 +62,7 @@ Serial.println("initializing...");
   dumpPin(globals.pins[5], 5);
   dumpPin(globals.pins[6], 6);
 
-  char buffer[2048];
-  configToJson(globals, buffer, 2048);
-  Serial.println("Buffer....");
-  Serial.println(buffer);
-
-  loadJsonConfig(buffer, globals);
-
-  configToJson(globals, buffer, 2048);
-  Serial.println(buffer);
-
+  
 }
 
 // Setup server.

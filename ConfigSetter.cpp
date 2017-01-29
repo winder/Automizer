@@ -3,6 +3,7 @@
 #include <cstring>
 #include <ArduinoJson.h>
 #include <stdio.h>
+#include <vector>
 
 String getCheckbox(String name, String description, bool checked) {
   return "<input type='checkbox' name='" + name + "'" + (checked ? " checked> ":"> ") + description + "\n";
@@ -151,13 +152,28 @@ bool processIntegrationResults(ESP8266WebServer& server, Config& c) {
 }
 
 
-void saveConfig(Config& c) {
+bool saveConfig(Config& c) {
   File configFile = SPIFFS.open("/config.conf", "w+");
-        
+
   if (!configFile)
   {
-    Serial.println(F("Failed to open config.conf"));            
-  } else {
+    Serial.println(F("Failed to open config.conf"));
+    return false;
+  }
+
+  // Serialize json and write to file.
+  int maxSize = sizeof(Config) * 2;
+  std::vector<char> buffer;
+  buffer.reserve(maxSize);
+  if(configToJson(c, &buffer[0], maxSize)) {
+    unsigned char* data = reinterpret_cast<unsigned char*>(&buffer[0]);
+    size_t bytes = configFile.write(data, maxSize);
+    Serial.printf("END Position =%u \n", configFile.position());
+    configFile.close();
+  }
+
+  /*
+    // Serialize object to file.
     Serial.println(F("Opened config.conf for UPDATE...."));
     Serial.printf("Start Position =%u \n", configFile.position());
   
@@ -166,34 +182,51 @@ void saveConfig(Config& c) {
   
     Serial.printf("END Position =%u \n", configFile.position());
     configFile.close();
-  }
+  */
 }
 
-void loadConfig(Config& c) {
+bool loadConfig(Config& c) {
   File configFile = SPIFFS.open("/config.conf", "r");
   
   if (!configFile)
   {
-    Serial.println(F("Failed to open config.conf")); 
-  } else {
-    Serial.println(F("Opened config.conf"));
-    Serial.print(F("CONFIG FILE CONTENTS----------------------"));
-    Serial.println();
-
-    uint8_t* config = reinterpret_cast<unsigned char*>(&c);
-    size_t size = configFile.size();
-    uint8_t counter = 0; 
-
-    for(int j=0;j<sizeof(Config);j++){
-      config[j] = configFile.read();
-    }
-
-    configFile.close();
+    Serial.println(F("Failed to open config.conf"));
+    return false;
   }
+
+  // Read file.
+  int val;
+  char ch;
+  std::vector<char> buffer;
+  buffer.reserve(2048);
+  while ((val = configFile.read()) != -1) {
+    buffer.push_back(char(val));
+  }
+
+  // Process json.
+  bool success = loadJsonConfig(&buffer[0], c);
+  configFile.close();
+  return success;
+  /*
+  // Serialize file into struct.
+  Serial.println(F("Opened config.conf"));
+  Serial.print(F("CONFIG FILE CONTENTS----------------------"));
+  Serial.println();
+
+  uint8_t* config = reinterpret_cast<unsigned char*>(&c);
+  size_t size = configFile.size();
+  uint8_t counter = 0; 
+
+  for(int j=0;j<sizeof(Config);j++){
+    config[j] = configFile.read();
+  }
+
+  configFile.close();
+  */
 }
 
 
-void loadJsonConfig(char* s, Config& c) {
+bool loadJsonConfig(char* s, Config& c) {
   DynamicJsonBuffer jsonBuffer;
 
   JsonObject& root = jsonBuffer.parseObject(s);
@@ -268,6 +301,8 @@ void loadJsonConfig(char* s, Config& c) {
       }
     }
   }
+
+  return true;
 }
 
 bool configToJson(Config& c, char* json, size_t maxSize) {

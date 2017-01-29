@@ -15,11 +15,11 @@ bool processIntegrationResults(ESP8266WebServer& server, Config& c);
 bool processPinResults(ESP8266WebServer& server, Config& c);
 bool processPinJsonResults(ESP8266WebServer& server, Config& c);
 
-void loadConfig(Config& c);
-void saveConfig(Config& c);
+bool loadConfig(Config& c);
+bool saveConfig(Config& c);
 
 // Given a JSON string, update the config file.
-void loadJsonConfig(char* s, Config& c);
+bool loadJsonConfig(char* s, Config& c);
 // Convert config file to JSON
 bool configToJson(Config& c, char* json, size_t maxSize);
 
