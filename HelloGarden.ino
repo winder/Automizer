@@ -35,7 +35,7 @@ bool customInitialization(Config& config) {
 Serial.println("initializing...");
   globals.pins[0].type = PinType_Input_TempSensorDHT11;
   globals.pins[1].type = PinType_Input_TempSensorDHT11;
-  
+
   globals.pins[4].type = PinType_Output_Relay;
   globals.pins[4].data.outputConfig.trigger = OutputTrigger_Temperature;
   globals.pins[4].data.outputConfig.tempConfig.sensorIndex = 1;
@@ -61,6 +61,17 @@ Serial.println("initializing...");
   dumpPin(globals.pins[4], 4);
   dumpPin(globals.pins[5], 5);
   dumpPin(globals.pins[6], 6);
+
+  char buffer[2048];
+  configToJson(globals, buffer, 2048);
+  Serial.println("Buffer....");
+  Serial.println(buffer);
+
+  loadJsonConfig(buffer, globals);
+
+  configToJson(globals, buffer, 2048);
+  Serial.println(buffer);
+
 }
 
 // Setup server.

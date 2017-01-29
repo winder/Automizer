@@ -1,6 +1,7 @@
 #include "ConfigSetter.h"
 #include <FS.h>
 #include <cstring>
+#include <ArduinoJson.h>
 
 String getCheckbox(String name, String description, bool checked) {
   return "<input type='checkbox' name='" + name + "'" + (checked ? " checked> ":"> ") + description + "\n";
@@ -191,35 +192,161 @@ void loadConfig(Config& c) {
 }
 
 
+void loadJsonConfig(char* s, Config& c) {
+  DynamicJsonBuffer jsonBuffer;
+
+  JsonObject& root = jsonBuffer.parseObject(s);
+
+  // 
+
+  // Load pins if it exists.
+  if (root.containsKey("pins")) {
+    JsonArray& nestedArray = root["pins"].asArray();
+    for (auto pinObject : nestedArray){
+      Pin& p = c.pins[pinObject["pin_idx"].as<int>()];
+      strncpy(p.name, pinObject["name"], PIN_NAME_LEN);
+      String type(pinObject["type"].asString());
+      p.type = getTypeFromString(type);
+      
+      switch (p.type) {
+        case PinType_Input_TempSensorDHT11:
+        case PinType_Input_TempSensorDHT22:
+          // Nothing else.
+          break;
+        case PinType_Output_Relay:
+          String outputTrigger(pinObject["trigger"].asString());
+          p.data.outputConfig.trigger = getOutputTriggerFromString(outputTrigger);
+          switch(p.data.outputConfig.trigger) {
+            case OutputTrigger_None:
+              break;
+            case OutputTrigger_Schedule:
+              //pinObject["trigger_schedule_start"] =
+              //pinObject["trigger_schedule_stop"]  =
+              break;
+            case OutputTrigger_Manual:
+              break;
+            case OutputTrigger_Temperature:
+              p.data.outputConfig.tempConfig.sensorIndex          = pinObject["sensorIndex"];
+              String tt(pinObject["temperatureTrigger"].asString());
+              p.data.outputConfig.tempConfig.temperatureTrigger   = getSensorTriggerTypeFromString(tt);
+              p.data.outputConfig.tempConfig.temperatureThreshold = pinObject["temperatureThreshold"];
+              String ht(pinObject["humidityTrigger"].asString());
+              p.data.outputConfig.tempConfig.humidityTrigger      = getSensorTriggerTypeFromString(ht);
+              p.data.outputConfig.tempConfig.humidityThreshold    = pinObject["humidityThreshold"];
+              break;
+          }
+          break;
+      }
+    }
+  }
+}
+
+bool configToJson(Config& c, char* json, size_t maxSize) {
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  JsonArray& data = root.createNestedArray("pins");
+
+  // Root config
+
+  // 3rd Party
+  // TODO
+
+  // Pins
+  for (int i = 0; i < NUM_PINS; i++) {
+    Pin& p = c.pins[i];
+    JsonObject& pinObject = data.createNestedObject();
+    pinObject["pin_idx"] = i;
+    pinObject["pin_number"] = p.pinNumber;
+    pinObject["name"] = p.name;
+    pinObject["type"] = pinTypeToString(p.type);
+
+    switch (p.type) {
+      case PinType_Input_TempSensorDHT11:
+      case PinType_Input_TempSensorDHT22:
+        // Nothing else.
+        break;
+      case PinType_Output_Relay:
+        pinObject["trigger"] = outputTriggerToString(p.data.outputConfig.trigger);
+        switch(p.data.outputConfig.trigger) {
+          case OutputTrigger_None:
+            break;
+          case OutputTrigger_Schedule:
+            //pinObject["trigger_schedule_start"] =
+            //pinObject["trigger_schedule_stop"]  =
+            break;
+          case OutputTrigger_Manual:
+            break;
+          case OutputTrigger_Temperature:
+            pinObject["sensorIndex"] =          p.data.outputConfig.tempConfig.sensorIndex;
+            pinObject["temperatureTrigger"] =   sensorTriggerTypeToString(p.data.outputConfig.tempConfig.temperatureTrigger);
+            pinObject["temperatureThreshold"] = p.data.outputConfig.tempConfig.temperatureThreshold;
+            pinObject["humidityTrigger"] =      sensorTriggerTypeToString(p.data.outputConfig.tempConfig.humidityTrigger);
+            pinObject["humidityThreshold"] =    p.data.outputConfig.tempConfig.humidityThreshold;
+            break;
+        }
+        break;
+    }
+  }
+
+  Serial.println(String("Json Buffer Size: ") + jsonBuffer.size());
+  if (jsonBuffer.size() > maxSize) return false;
+  root.printTo(json, maxSize);
+  return true;
+}
+
+
+PinType getTypeFromString(String& s) {
+  if (s == "disabled") return PinType_Disabled;
+  if (s == "dht11")    return PinType_Input_TempSensorDHT11;
+  if (s == "dht22")    return PinType_Input_TempSensorDHT22;
+  if (s == "relay")    return PinType_Output_Relay;
+  return PinType_Disabled;
+}
+    
 String pinTypeToString(PinType type) {
   switch(type) {
     case PinType_Disabled:
-      return "Disabled";
+      return "disabled";
     case PinType_Input_TempSensorDHT11:
-      return "DHT11";
+      return "dht11";
     case PinType_Input_TempSensorDHT22:
-      return "DHT22";
+      return "dht22";
     case PinType_Output_Relay:
-      return "Relay";
+      return "relay";
   }
   return "";
+}
+
+OutputTrigger getOutputTriggerFromString(String& s) {
+  if (s == "none")        return OutputTrigger_None;
+  if (s == "environment") return OutputTrigger_Temperature;
+  if (s == "schedule")    return OutputTrigger_Schedule;
+  if (s == "manual")      return OutputTrigger_Manual;
+  return OutputTrigger_None;
 }
 
 String outputTriggerToString(OutputTrigger trigger) {
   switch(trigger) {
-    case OutputTrigger_None: return "None";
-    case OutputTrigger_Temperature: return "Temperature";
-    case OutputTrigger_Schedule: return "Schedule";
-    case OutputTrigger_Manual: return "Manual";
+    case OutputTrigger_None:        return "none";
+    case OutputTrigger_Temperature: return "environment";
+    case OutputTrigger_Schedule:    return "schedule";
+    case OutputTrigger_Manual:      return "manual";
   }
   return "";
 }
 
+SensorTriggerType getSensorTriggerTypeFromString(String& s) {
+  if (s == "disabled") return SensorTriggerType_Disabled;
+  if (s == "above")    return SensorTriggerType_Above;
+  if (s == "below")    return SensorTriggerType_Below;
+  return SensorTriggerType_Disabled;
+}
+
 String sensorTriggerTypeToString(SensorTriggerType type) {
   switch(type) {
-    case SensorTriggerType_Disabled: return "Disabled";
-    case SensorTriggerType_Above: return "Above";
-    case SensorTriggerType_Below: return "Below";
+    case SensorTriggerType_Disabled: return "disabled";
+    case SensorTriggerType_Above: return "above";
+    case SensorTriggerType_Below: return "below";
   }
   return "";
 }
