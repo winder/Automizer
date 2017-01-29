@@ -114,6 +114,9 @@ class Enabler {
               bool tempEnabled = isEnabled(out.tempConfig.temperatureTrigger, state[i].enabled, out.tempConfig.temperatureThreshold, data.temp_f);
               bool humidityEnabled = isEnabled(out.tempConfig.humidityTrigger, state[i].enabled, out.tempConfig.humidityThreshold, data.humidity);
               return tempEnabled || humidityEnabled;
+            } else {
+              // If the sensor failed the last reading, don't change the pin state.
+              return state[i].enabled;
             }
           }
           break;
