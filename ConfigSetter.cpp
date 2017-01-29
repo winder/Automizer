@@ -2,6 +2,7 @@
 #include <FS.h>
 #include <cstring>
 #include <ArduinoJson.h>
+#include <stdio.h>
 
 String getCheckbox(String name, String description, bool checked) {
   return "<input type='checkbox' name='" + name + "'" + (checked ? " checked> ":"> ") + description + "\n";
@@ -197,7 +198,35 @@ void loadJsonConfig(char* s, Config& c) {
 
   JsonObject& root = jsonBuffer.parseObject(s);
 
-  // 
+  // Root config
+  if (root.containsKey("config")) {
+    JsonObject& conf = root["config"].asObject();
+    
+    c.ledPin                = conf["led_pin"];
+    c.minSensorIntervalMs   = conf["minSensorIntervalMs"];
+    c.timeZoneOffsetMinutes = conf["timeZoneOffsetMinutes"];
+    c.updateInterval        = conf["updateInterval"];
+    c.uploadInterval        = conf["uploadInterval"];
+  }
+
+  // Third party config
+  if (root.containsKey("third_party")) {
+    JsonObject& thirdParty = root["third_party"].asObject();
+    ThirdPartyConfig& tpc = c.thirdPartyConfig;
+    
+    tpc.useThingSpeak = thirdParty["useThingSpeak"].as<bool>();
+    tpc.thingSpeakChannel = thirdParty["thingSpeakChannel"].as<unsigned long>();
+    strncpy(tpc.thingSpeakKey, thirdParty["thingSpeakKey"], KEY_LEN);
+    
+    tpc.useBlynk = thirdParty["useBlynk"].as<bool>();
+    strncpy(tpc.blynkKey, thirdParty["blynkKey"], KEY_LEN);
+    
+    tpc.usePushingBox = thirdParty["usePushingBox"].as<bool>();
+    strncpy(tpc.pushingBoxKey, thirdParty["pushingBoxKey"], KEY_LEN);
+    
+    tpc.useDweet = thirdParty["useDweet"].as<bool>();
+    strncpy(tpc.dweetThing, thirdParty["dweetThing"], KEY_LEN);
+  }
 
   // Load pins if it exists.
   if (root.containsKey("pins")) {
@@ -247,10 +276,30 @@ bool configToJson(Config& c, char* json, size_t maxSize) {
   JsonArray& data = root.createNestedArray("pins");
 
   // Root config
+  JsonObject& config = root.createNestedObject("config");
+  config["led_pin"] = c.ledPin;
+  config["minSensorIntervalMs"] = c.minSensorIntervalMs;
+  config["timeZoneOffsetMinutes"] = c.timeZoneOffsetMinutes;
+  config["updateInterval"] = c.updateInterval;
+  config["uploadInterval"] = c.uploadInterval;
 
   // 3rd Party
-  // TODO
+  ThirdPartyConfig& tpc = c.thirdPartyConfig;
+  JsonObject& thirdParty = root.createNestedObject("third_party");
+  
+  thirdParty["useThingSpeak"] = tpc.useThingSpeak;
+  thirdParty["thingSpeakChannel"] = tpc.thingSpeakChannel;
+  thirdParty["thingSpeakKey"] = tpc.thingSpeakKey;
 
+  thirdParty["useBlynk"] = tpc.useBlynk;
+  thirdParty["blynkKey"] = tpc.blynkKey;
+  
+  thirdParty["usePushingBox"] = tpc.usePushingBox;
+  thirdParty["pushingBoxKey"] = tpc.pushingBoxKey;
+  
+  thirdParty["useDweet"] = tpc.useDweet;
+  thirdParty["dweetThing"] = tpc.dweetThing;
+  
   // Pins
   for (int i = 0; i < NUM_PINS; i++) {
     Pin& p = c.pins[i];
@@ -271,6 +320,7 @@ bool configToJson(Config& c, char* json, size_t maxSize) {
           case OutputTrigger_None:
             break;
           case OutputTrigger_Schedule:
+            
             //pinObject["trigger_schedule_start"] =
             //pinObject["trigger_schedule_stop"]  =
             break;

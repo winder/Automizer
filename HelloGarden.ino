@@ -123,7 +123,7 @@ void loop(void){
 // globals.pinsInitialized   - dirty flag for pin configuration
 void updateSettings() {
   if (!globals.configInitialized) {
-    timeClient.setTimeOffset(globals.timZoneOffsetMinutes * 60);
+    timeClient.setTimeOffset(globals.timeZoneOffsetMinutes * 60);
     globals.configInitialized = true;
   }
   

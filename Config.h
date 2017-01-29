@@ -36,14 +36,14 @@ struct Config {
   int ledPin = LED_BUILTIN;
   
   // DHT Sensor settings
-  const long minSensorIntervalMs = 2000;
+  long minSensorIntervalMs = 2000;
 
   /////////////////////////
   // User configurations //
   /////////////////////////
   bool configInitialized = false;
   
-  int32_t timZoneOffsetMinutes = -5 * 60; // EST (no daylight savings)
+  int32_t timeZoneOffsetMinutes = -5 * 60; // EST (no daylight savings)
 
   // Interval between updating sensors
   long updateInterval = 60 * 1; // 1 min
