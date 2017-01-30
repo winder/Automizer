@@ -143,9 +143,10 @@ void updateSettings() {
           Serial.println(String("Creating RELAY on pin: ") + (i+1));
           pinMode(globals.pins[i].pinNumber, OUTPUT);
           digitalWrite(globals.pins[i].pinNumber, OFF);
-          // TODO: Configure relay triggers
           break;
         default:
+          pinMode(globals.pins[i].pinNumber, OUTPUT);
+          digitalWrite(globals.pins[i].pinNumber, OFF);
           break;
       }
     }

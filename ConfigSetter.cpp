@@ -3,6 +3,7 @@
 #include <cstring>
 #include <ArduinoJson.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <vector>
 
 String getCheckbox(String name, String description, bool checked) {
@@ -292,21 +293,36 @@ bool loadJsonConfig(const char* s, Config& c) {
               case OutputTrigger_None:
                 break;
               case OutputTrigger_Schedule:
-                //pinObject["trigger_schedule_start"] =
-                //pinObject["trigger_schedule_stop"]  =
+                {
+                  int hours, minutes;
+                  
+                  String start(pinObject["trigger_schedule_start"].asString());
+                  hours   = start.substring(0,1).toInt();
+                  minutes = start.substring(3,4).toInt();
+                  p.data.outputConfig.scheduleConfig.startMinutes = hours * 60 + minutes;
+                  Serial.println(start + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
+                  
+                  String stop(pinObject["trigger_schedule_stop"].asString());
+                  hours   = stop.substring(0,2).toInt();
+                  minutes = stop.substring(3,5).toInt();
+                  p.data.outputConfig.scheduleConfig.stopMinutes = hours * 60 + minutes;
+                  Serial.println(stop + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
+                }
                 break;
               case OutputTrigger_Manual:
                 break;
               case OutputTrigger_Temperature:
-                p.data.outputConfig.tempConfig.sensorIndex          = pinObject["trigger_sensor_pin"];
-                String tt(pinObject["trigger_temperature_event"].asString());
-                tt.toLowerCase();
-                p.data.outputConfig.tempConfig.temperatureTrigger   = getSensorTriggerTypeFromString(tt);
-                p.data.outputConfig.tempConfig.temperatureThreshold = pinObject["trigger_temperature_f"];
-                String ht(pinObject["trigger_humidity_event"].asString());
-                ht.toLowerCase();
-                p.data.outputConfig.tempConfig.humidityTrigger      = getSensorTriggerTypeFromString(ht);
-                p.data.outputConfig.tempConfig.humidityThreshold    = pinObject["trigger_humidity_percent"];
+                {
+                  p.data.outputConfig.tempConfig.sensorIndex          = pinObject["trigger_sensor_pin"];
+                  String tt(pinObject["trigger_temperature_event"].asString());
+                  tt.toLowerCase();
+                  p.data.outputConfig.tempConfig.temperatureTrigger   = getSensorTriggerTypeFromString(tt);
+                  p.data.outputConfig.tempConfig.temperatureThreshold = pinObject["trigger_temperature_f"];
+                  String ht(pinObject["trigger_humidity_event"].asString());
+                  ht.toLowerCase();
+                  p.data.outputConfig.tempConfig.humidityTrigger      = getSensorTriggerTypeFromString(ht);
+                  p.data.outputConfig.tempConfig.humidityThreshold    = pinObject["trigger_humidity_percent"];
+                }
                 break;
             }
             break;
@@ -368,16 +384,25 @@ bool configToJson(Config& c, char* json, size_t maxSize) {
           case OutputTrigger_None:
             break;
           case OutputTrigger_Schedule:
-            
-            //pinObject["trigger_schedule_start"] =
-            //pinObject["trigger_schedule_stop"]  =
+            {
+              int bufSize = 6;
+              char buffer[bufSize];
+              
+              int startMinutes = p.data.outputConfig.scheduleConfig.startMinutes;
+              snprintf(buffer, bufSize, "%02d:%02d", startMinutes/60, startMinutes%60);
+              pinObject["trigger_schedule_start"] = String(buffer);
+              
+              int stopMinutes = p.data.outputConfig.scheduleConfig.stopMinutes;
+              snprintf(buffer, bufSize, "%02d:%02d", stopMinutes/60, stopMinutes%60);
+              pinObject["trigger_schedule_stop"]  = String(buffer);
+            }
             break;
           case OutputTrigger_Manual:
             break;
           case OutputTrigger_Temperature:
             pinObject["trigger_sensor_pin"] =          p.data.outputConfig.tempConfig.sensorIndex;
             pinObject["trigger_temperature_event"] =   sensorTriggerTypeToString(p.data.outputConfig.tempConfig.temperatureTrigger);
-            pinObject["trigger_temperature_f"] = p.data.outputConfig.tempConfig.temperatureThreshold;
+            pinObject["trigger_temperature_f"] =       p.data.outputConfig.tempConfig.temperatureThreshold;
             pinObject["trigger_humidity_event"] =      sensorTriggerTypeToString(p.data.outputConfig.tempConfig.humidityTrigger);
             pinObject["trigger_humidity_percent"] =    p.data.outputConfig.tempConfig.humidityThreshold;
             break;
