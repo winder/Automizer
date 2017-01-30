@@ -25,7 +25,7 @@
         "type": "object",
         "title": "Pin {{idx}} Settings",
         "properties": {
-          "pin_number": {
+          "pin_idx": {
             "type": "number",
             "default": "{{idx}}"
           },
@@ -54,7 +54,7 @@
             "type": "string",
             "title": "Stop Time"
           },
-          "trigger_temperature_pin": {
+          "trigger_sensor_pin": {
             "type": "number",
             "title": "Pin number of the sensor which should be used for this trigger."
           },
@@ -90,7 +90,7 @@
           "legend": "Pin {{idx}}",
           "items": [
             {
-              "key": "pins[].pin_number",
+              "key": "pins[].pin_idx",
               "type": "hidden"
             },
             {
@@ -152,7 +152,7 @@
                       "type": "section",
                       "title": "Author",
                       "items": [
-                        "pins[].trigger_temperature_pin",
+                        "pins[].trigger_sensor_pin",
                         "pins[].trigger_temperature_event",
                         "pins[].trigger_temperature_f",
                         "pins[].trigger_humidity_event",

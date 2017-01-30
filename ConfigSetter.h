@@ -19,7 +19,7 @@ bool loadConfig(Config& c);
 bool saveConfig(Config& c);
 
 // Given a JSON string, update the config file.
-bool loadJsonConfig(char* s, Config& c);
+bool loadJsonConfig(const char* s, Config& c);
 // Convert config file to JSON
 bool configToJson(Config& c, char* json, size_t maxSize);
 

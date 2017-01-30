@@ -74,7 +74,7 @@ void GardenServer::handleSettings() {
   }
   else if (server.uri() == "/submitPinSettingsJson") {
     processPinJsonResults(server, globals);
-    saveConfig(globals);
+    //saveConfig(globals);
     globals.pinsInitialized = false;
   }
   

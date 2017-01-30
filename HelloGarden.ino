@@ -124,6 +124,10 @@ void updateSettings() {
     // Initialize the pins
     int numPins = NUM_PINS;
     for (int i = 0; i < numPins; i++) {
+      if (globals.pins[i].type != PinType_Disabled) {
+        dumpPin(globals.pins[i], i);
+      }
+      
       switch (globals.pins[i].type) {
         case PinType_Input_TempSensorDHT11:
           Serial.println(String("Creating DHT11 on pin: ") + (i+1));
