@@ -297,8 +297,8 @@ bool loadJsonConfig(const char* s, Config& c) {
                   int hours, minutes;
                   
                   String start(pinObject["trigger_schedule_start"].asString());
-                  hours   = start.substring(0,1).toInt();
-                  minutes = start.substring(3,4).toInt();
+                  hours   = start.substring(0,2).toInt();
+                  minutes = start.substring(3,5).toInt();
                   p.data.outputConfig.scheduleConfig.startMinutes = hours * 60 + minutes;
                   Serial.println(start + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
                   
