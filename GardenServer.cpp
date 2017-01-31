@@ -169,22 +169,23 @@ void GardenServer::handleSpecificArg() {
 }
 
 void GardenServer::handleSensor() {
-  /*
-  // read sensor
-  dht_data data = dht.getTemperature();
-
-  // Arduino has a hard time with float to string
-  String webString="Temperature: "+String(data.temp_f, 2)+" F";
-  webString += "\nHumidity: "+String(data.humidity, 2)+"%";
-
-  if (data.failed) {
-    webString = "Failed to read sensor data.";
+  String webString;
+  for (int i = 0; i < NUM_PINS; i++) {
+    Pin& p = globals.pins[i];
+    switch (p.type) {
+      case PinType_Input_TempSensorDHT11:
+      case PinType_Input_TempSensorDHT22:
+        if (p.data.tempData.status) {
+          webString += String("\nFailed to read sensor data on pin ") + i + ":" + String(p.name) + "\n";
+        } else {
+          webString += String("\n== Pin ") + i + ": " + p.name + " ==\n";
+          webString += " Temperature: " + String(p.data.tempData.temp_f,2) + " F\n";
+          webString += " Humidity:    " + String(p.data.tempData.humidity, 2) + "%\n";
+        }
+      break;
+    }
   }
-
-  // send to someones browser when asked
   server.send(200, "text/plain", webString);
-  */
-  server.send(200, "text/plain", "TODO");
 }
 
 void GardenServer::handleNotFound(){
