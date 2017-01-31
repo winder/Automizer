@@ -35,7 +35,7 @@ bool customInitialization(Config& config) {
 Serial.println("initializing...");
   globals.pins[0].type = PinType_Input_TempSensorDHT11;
   globals.pins[1].type = PinType_Input_TempSensorDHT11;
-
+/*
   globals.pins[4].type = PinType_Output_Relay;
   globals.pins[4].data.outputConfig.trigger = OutputTrigger_Temperature;
   globals.pins[4].data.outputConfig.tempConfig.sensorIndex = 1;
@@ -51,18 +51,16 @@ Serial.println("initializing...");
   globals.pins[5].data.outputConfig.tempConfig.temperatureThreshold = 80;
   globals.pins[5].data.outputConfig.tempConfig.humidityTrigger = SensorTriggerType_Disabled;
   globals.pins[5].data.outputConfig.tempConfig.humidityThreshold = 50;
-
+*/
   globals.pins[6].type = PinType_Output_Relay;
   globals.pins[6].data.outputConfig.trigger = OutputTrigger_Schedule;
-  globals.pins[6].data.outputConfig.scheduleConfig.startMinutes = 61;
-  globals.pins[6].data.outputConfig.scheduleConfig.stopMinutes = 21;
+  globals.pins[6].data.outputConfig.scheduleConfig.startMinutes = (12 + 8) * 60 + 43;
+  globals.pins[6].data.outputConfig.scheduleConfig.stopMinutes = (12 + 8) * 60 + 46;
 
   dumpPin(globals.pins[0], 0);
   dumpPin(globals.pins[4], 4);
   dumpPin(globals.pins[5], 5);
   dumpPin(globals.pins[6], 6);
-
-  
 }
 
 // Setup server.
@@ -132,15 +130,18 @@ void updateSettings() {
         case PinType_Input_TempSensorDHT11:
           Serial.println(String("Creating DHT11 on pin: ") + (i+1));
           pinMode(globals.pins[i].pinNumber, INPUT);
+          globals.pins[i].data.tempData.failed = 1;
           dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT11, 16, globals.minSensorIntervalMs), i));
           break;
         case PinType_Input_TempSensorDHT22:
           Serial.println(String("Creating DHT11 on pin: ") + (i+1));
           pinMode(globals.pins[i].pinNumber, INPUT);
+          globals.pins[i].data.tempData.failed = 1;
           dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT22, 16, globals.minSensorIntervalMs), i));
           break;
         case PinType_Output_Relay:
           Serial.println(String("Creating RELAY on pin: ") + (i+1));
+          globals.pins[i].enabled = false;
           pinMode(globals.pins[i].pinNumber, OUTPUT);
           digitalWrite(globals.pins[i].pinNumber, OFF);
           break;

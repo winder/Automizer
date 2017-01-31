@@ -9,21 +9,7 @@
 
 #define TEMP_HYSTERESIS 4
 class Enabler {
-  private:
-    struct pin_meta {
-      // Marked if the pin configuration should be recalculated.
-      bool stale = true;
-      
-      // Used when the time needs to changed at a future timestamp.
-      unsigned long changeAt;
-      
-      // For hysteresis save the timestamp of the last toggle.
-      unsigned long lastChange;
-      
-      // The current enable state
-      bool enabled;
-    };
-    
+
   public:
     Enabler(PinArray& _pins, int _numPins) : pins(_pins), numPins(_numPins) {}
 
@@ -36,13 +22,8 @@ class Enabler {
       if (lastUpdate == currentTimestamp) return;
       lastUpdate = currentTimestamp;
       
-      //Serial.println(timeClient.getFormattedTime());
+      Serial.println(timeClient.getFormattedTime());
       
-      // Check for updates to config
-      for (int i = 0; i < numPins; i++) {
-        updateStateConfig(pins[i], state[i], currentTimestamp);
-      }
-
       // Toggles
       for (int i = 0; i < numPins; i++) {
         switch (pins[i].type) {
@@ -52,47 +33,17 @@ class Enabler {
           case PinType_Output_Relay:
             OutputConfig& outConf = pins[i].data.outputConfig;
             bool enabled = checkPin(pins[i], outConf, i, hours, minutes);
-            if (state[i].enabled != enabled) {
+            if (pins[i].enabled != enabled) {
               Serial.println(String("ENABLER - Pin ") + i + ", changing to: " + enabled);
-              state[i].enabled = enabled;
               digitalWrite(pins[i].pinNumber, enabled ? ON : OFF);
+              pins[i].enabled = enabled;
             }
             break;
         }
-        state[i].stale = false;
       }
     }
 
   private:
-
-    void updateStateConfig(Pin& p, pin_meta& meta, int currentTimestamp) {
-      if (meta.stale == false) return;
-      
-      // Reset data/configuration
-      meta.enabled = false;
-
-      switch (p.type) {
-        case PinType_Input_TempSensorDHT11:
-        case PinType_Input_TempSensorDHT22:
-          // Clear out sensor data for inputs
-          std::memset(&(p.data), 0, sizeof(p.data));
-          p.data.tempData.failed = true;
-          break;
-        case PinType_Output_Relay:
-          meta.lastChange = 0;
-          OutputConfig& outConf = p.data.outputConfig;
-          switch(outConf.trigger) {
-            case OutputTrigger_Schedule:
-              break;
-            // Don't need to pre-calculate these.
-            case OutputTrigger_Temperature:
-            case OutputTrigger_Manual:
-            case OutputTrigger_None:
-              break;
-          }
-          break;
-      }
-    }
 
     bool isEnabled(SensorTriggerType type, bool enabled, float threshhold, float sensorValue) {
       switch(type) {
@@ -111,12 +62,12 @@ class Enabler {
           {
             dht_data& data = pins[out.tempConfig.sensorIndex].data.tempData;
             if (!data.failed) {
-              bool tempEnabled = isEnabled(out.tempConfig.temperatureTrigger, state[i].enabled, out.tempConfig.temperatureThreshold, data.temp_f);
-              bool humidityEnabled = isEnabled(out.tempConfig.humidityTrigger, state[i].enabled, out.tempConfig.humidityThreshold, data.humidity);
+              bool tempEnabled = isEnabled(out.tempConfig.temperatureTrigger, pins[i].enabled, out.tempConfig.temperatureThreshold, data.temp_f);
+              bool humidityEnabled = isEnabled(out.tempConfig.humidityTrigger, pins[i].enabled, out.tempConfig.humidityThreshold, data.humidity);
               return tempEnabled || humidityEnabled;
             } else {
               // If the sensor failed the last reading, don't change the pin state.
-              return state[i].enabled;
+              return pins[i].enabled;
             }
           }
           break;
@@ -124,7 +75,7 @@ class Enabler {
           {
             int curMinutes = hours * 60 + minutes;
             ScheduleTriggerConfig& conf = out.scheduleConfig;
-
+            
             // Off at beginning and end of day.
             if (conf.startMinutes < conf.stopMinutes) {
               return conf.startMinutes <= curMinutes && curMinutes < conf.stopMinutes;
@@ -142,9 +93,6 @@ class Enabler {
       }
       return false;
     }
-    
-    // Metadata used to determine if the pin needs to toggle.
-    pin_meta state[NUM_PINS]; 
 
     // Reference to the pins.
     const int numPins;
