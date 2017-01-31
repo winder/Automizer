@@ -40,6 +40,14 @@ String GardenServer::settingsPinProcessor(const String& key) {
 String GardenServer::settingsPinJsonProcessor(const String& key) {
   if (key == "TITLE") return "Gardenbot Pin Settings";
   else if (key == "NUM_PINS") return String(NUM_PINS, DEC);
+  else if (key == "DEFAULTS") {
+    int maxSize = sizeof(Config) * 2;
+    std::vector<char> buffer;
+    buffer.reserve(maxSize);
+    if(configToJson(c, &buffer[0], maxSize)) {
+      return String(&buffer[0]);
+    }
+  }
 }
 
 String GardenServer::settingsLinksProcessor(const String& key) {

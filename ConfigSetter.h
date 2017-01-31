@@ -21,7 +21,7 @@ bool saveConfig(Config& c);
 // Given a JSON string, update the config file.
 bool loadJsonConfig(const char* s, Config& c);
 // Convert config file to JSON
-bool configToJson(Config& c, char* json, size_t maxSize);
+bool configToJson(Config& c, char* json, size_t maxSize, bool pinsOnly=false);
 
 // Pin object helpers...
 String pinTypeToString(PinType type);

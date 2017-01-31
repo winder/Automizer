@@ -10,12 +10,10 @@
     <div id="res" class="alert"></div>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/1.11.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/underscorejs/1.4.2/underscore-min.js"></script>
-    <script type="text/javascript">
-%%%INCLUDE:/jsonform_deps/jsonform.js%
-    </script>
+    <script type="text/javascript" src="https://cdn.rawgit.com/ulion/jsonform/2a5e34d316221ebe658efcfab32454984dc2610a/lib/jsonform.js"></script>
     <script type="text/javascript">
       $('form').jsonForm({
-
+        "value": %%%DEFAULTS%,
         "schema": {
     "pins": {
       "type": "array",

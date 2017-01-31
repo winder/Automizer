@@ -334,35 +334,39 @@ bool loadJsonConfig(const char* s, Config& c) {
   return true;
 }
 
-bool configToJson(Config& c, char* json, size_t maxSize) {
+bool configToJson(Config& c, char* json, size_t maxSize, bool pinsOnly) {
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
   JsonArray& data = root.createNestedArray("pins");
 
   // Root config
-  JsonObject& config = root.createNestedObject("config");
-  config["led_pin"] = c.ledPin;
-  config["minSensorIntervalMs"] = c.minSensorIntervalMs;
-  config["timeZoneOffsetMinutes"] = c.timeZoneOffsetMinutes;
-  config["updateInterval"] = c.updateInterval;
-  config["uploadInterval"] = c.uploadInterval;
+  if (!pinsOnly) {
+    JsonObject& config = root.createNestedObject("config");
+    config["led_pin"] = c.ledPin;
+    config["minSensorIntervalMs"] = c.minSensorIntervalMs;
+    config["timeZoneOffsetMinutes"] = c.timeZoneOffsetMinutes;
+    config["updateInterval"] = c.updateInterval;
+    config["uploadInterval"] = c.uploadInterval;
+  }
 
   // 3rd Party
-  ThirdPartyConfig& tpc = c.thirdPartyConfig;
-  JsonObject& thirdParty = root.createNestedObject("third_party");
+  if (!pinsOnly) {
+    ThirdPartyConfig& tpc = c.thirdPartyConfig;
+    JsonObject& thirdParty = root.createNestedObject("third_party");
+    
+    thirdParty["useThingSpeak"] = tpc.useThingSpeak;
+    thirdParty["thingSpeakChannel"] = tpc.thingSpeakChannel;
+    thirdParty["thingSpeakKey"] = tpc.thingSpeakKey;
   
-  thirdParty["useThingSpeak"] = tpc.useThingSpeak;
-  thirdParty["thingSpeakChannel"] = tpc.thingSpeakChannel;
-  thirdParty["thingSpeakKey"] = tpc.thingSpeakKey;
-
-  thirdParty["useBlynk"] = tpc.useBlynk;
-  thirdParty["blynkKey"] = tpc.blynkKey;
-  
-  thirdParty["usePushingBox"] = tpc.usePushingBox;
-  thirdParty["pushingBoxKey"] = tpc.pushingBoxKey;
-  
-  thirdParty["useDweet"] = tpc.useDweet;
-  thirdParty["dweetThing"] = tpc.dweetThing;
+    thirdParty["useBlynk"] = tpc.useBlynk;
+    thirdParty["blynkKey"] = tpc.blynkKey;
+    
+    thirdParty["usePushingBox"] = tpc.usePushingBox;
+    thirdParty["pushingBoxKey"] = tpc.pushingBoxKey;
+    
+    thirdParty["useDweet"] = tpc.useDweet;
+    thirdParty["dweetThing"] = tpc.dweetThing;
+  }
   
   // Pins
   for (int i = 0; i < NUM_PINS; i++) {
