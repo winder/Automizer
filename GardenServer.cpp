@@ -3,6 +3,7 @@
 #include "ConfigSetter.h"
 #include "DhtReader.h"
 #include "ESPTemplateProcessor.h"
+#include <vector>
 
 #define BIND(NAME) std::bind(&GardenServer::NAME, this)
 #define BIND_PROCESSOR(NAME) std::bind(&GardenServer::NAME, this, std::placeholders::_1);
@@ -44,7 +45,7 @@ String GardenServer::settingsPinJsonProcessor(const String& key) {
     int maxSize = sizeof(Config) * 2;
     std::vector<char> buffer;
     buffer.reserve(maxSize);
-    if(configToJson(c, &buffer[0], maxSize)) {
+    if(configToJson(globals, &buffer[0], maxSize)) {
       return String(&buffer[0]);
     }
   }
