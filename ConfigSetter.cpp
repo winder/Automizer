@@ -300,13 +300,13 @@ bool loadJsonConfig(const char* s, Config& c) {
                   hours   = start.substring(0,2).toInt();
                   minutes = start.substring(3,5).toInt();
                   p.data.outputConfig.scheduleConfig.startMinutes = hours * 60 + minutes;
-                  Serial.println(start + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
+                  //Serial.println(start + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
                   
                   String stop(pinObject["trigger_schedule_stop"].asString());
                   hours   = stop.substring(0,2).toInt();
                   minutes = stop.substring(3,5).toInt();
                   p.data.outputConfig.scheduleConfig.stopMinutes = hours * 60 + minutes;
-                  Serial.println(stop + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
+                  //Serial.println(stop + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
                 }
                 break;
               case OutputTrigger_Manual:

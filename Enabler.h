@@ -22,7 +22,7 @@ class Enabler {
       if (lastUpdate == currentTimestamp) return;
       lastUpdate = currentTimestamp;
       
-      Serial.println(timeClient.getFormattedTime());
+      //Serial.println(timeClient.getFormattedTime());
       
       // Toggles
       for (int i = 0; i < numPins; i++) {

@@ -141,9 +141,10 @@ void updateSettings() {
           break;
         case PinType_Output_Relay:
           Serial.println(String("Creating RELAY on pin: ") + (i+1));
-          globals.pins[i].enabled = false;
           pinMode(globals.pins[i].pinNumber, OUTPUT);
-          digitalWrite(globals.pins[i].pinNumber, OFF);
+          // Initialize pin state based on whatever the previous digital state was.
+          // This prevents toggling off then right back on.
+          globals.pins[i].enabled = digitalRead(globals.pins[i].pinNumber);
           break;
         default:
           pinMode(globals.pins[i].pinNumber, OUTPUT);
