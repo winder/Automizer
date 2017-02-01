@@ -266,7 +266,7 @@ bool loadJsonConfig(const char* s, Config& c) {
   if (root.containsKey("pins")) {
     JsonArray& nestedArray = root["pins"].asArray();
     for (JsonObject& pinObject : nestedArray){
-      Pin& p = c.pins[pinObject["pin_idx"].as<int>() - 1];
+      Pin& p = c.pins[pinObject["pin_idx"].as<int>()];
 
       if (pinObject.containsKey("pin_number")) {
         //p.pinNumber = pinObject["pin_number"];
