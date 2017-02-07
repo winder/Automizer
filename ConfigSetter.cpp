@@ -170,6 +170,8 @@ bool saveConfig(Config& c) {
     size_t bytes = configFile.write(data, maxSize);
     Serial.printf("END Position =%u \n", configFile.position());
     configFile.close();
+  } else {
+    Serial.println("Failed to save config.");
   }
 
   /*
@@ -230,6 +232,7 @@ bool loadJsonConfig(const char* s, Config& c) {
   DynamicJsonBuffer jsonBuffer;
 
   Serial.println("load json config...");
+  Serial.println(s);
   JsonObject& root = jsonBuffer.parseObject(s);
   Serial.println("parsed!");
   // Root config

@@ -34,6 +34,9 @@ struct ThirdPartyConfig {
 struct Config {
   // Pin config
   int ledPin = LED_BUILTIN;
+
+  uint8_t on = HIGH;
+  uint8_t off = LOW;
   
   // DHT Sensor settings
   long minSensorIntervalMs = 2000;

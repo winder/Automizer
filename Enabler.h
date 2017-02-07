@@ -11,7 +11,7 @@
 class Enabler {
 
   public:
-    Enabler(PinArray& _pins, int _numPins) : pins(_pins), numPins(_numPins) {}
+    Enabler(PinArray& _pins, int _numPins, Config& conf) : pins(_pins), numPins(_numPins), config(conf) {}
 
     void update(NTPClient& timeClient) {
       unsigned long currentTimestamp = timeClient.getEpochTime();
@@ -33,10 +33,11 @@ class Enabler {
           case PinType_Output_Relay:
             OutputConfig& outConf = pins[i].data.outputConfig;
             bool enabled = checkPin(pins[i], outConf, i, hours, minutes);
-            if (pins[i].enabled != enabled) {
+            if (pins[i].stale || pins[i].enabled != enabled) {
               Serial.println(String("ENABLER - Pin ") + i + ", changing to: " + enabled);
-              digitalWrite(pins[i].pinNumber, enabled ? ON : OFF);
+              digitalWrite(pins[i].pinNumber, enabled ? config.on : config.off);
               pins[i].enabled = enabled;
+              pins[i].stale = false;
             }
             break;
         }
@@ -98,6 +99,7 @@ class Enabler {
     const int numPins;
     unsigned long lastUpdate;
     PinArray& pins;
+    Config& config;
 };
 
 #endif

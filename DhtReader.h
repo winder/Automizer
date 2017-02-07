@@ -25,6 +25,8 @@ class DhtReader {
         minReadIntervalMs(_minReadIntervalMs),
         lastReadMs()
     {
+      // Sets the pinMode
+      dht.begin();
     }
     
     dht_data getTemperature() {  

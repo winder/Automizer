@@ -23,19 +23,19 @@ NTPClient timeClient(ntpUDP);
 // Map the DhtReader to the pin array index.
 std::vector<std::pair<DhtReader,int>> dhtReaders;
 GardenServer gardenServer(globals);
-Enabler enabler(globals.pins, NUM_PINS);
+Enabler enabler(globals.pins, NUM_PINS, globals);
 
 // Helper objects
 ThirdPartyIntegrations integrations(globals.thirdPartyConfig);
 
 bool customInitialization(Config& config) {
-  // Using a custom initialization until I get the json config setter/loader figured out.
-  //return false;
+  return false;
 
-Serial.println("initializing...");
+  // Config can be hard coded here if the method returns true.
+/*
+  Serial.println("initializing...");
   globals.pins[0].type = PinType_Input_TempSensorDHT11;
   globals.pins[1].type = PinType_Input_TempSensorDHT11;
-/*
   globals.pins[4].type = PinType_Output_Relay;
   globals.pins[4].data.outputConfig.trigger = OutputTrigger_Temperature;
   globals.pins[4].data.outputConfig.tempConfig.sensorIndex = 1;
@@ -51,7 +51,7 @@ Serial.println("initializing...");
   globals.pins[5].data.outputConfig.tempConfig.temperatureThreshold = 80;
   globals.pins[5].data.outputConfig.tempConfig.humidityTrigger = SensorTriggerType_Disabled;
   globals.pins[5].data.outputConfig.tempConfig.humidityThreshold = 50;
-*/
+
   globals.pins[6].type = PinType_Output_Relay;
   globals.pins[6].data.outputConfig.trigger = OutputTrigger_Schedule;
   globals.pins[6].data.outputConfig.scheduleConfig.startMinutes = (12 + 8) * 60 + 43;
@@ -61,6 +61,9 @@ Serial.println("initializing...");
   dumpPin(globals.pins[4], 4);
   dumpPin(globals.pins[5], 5);
   dumpPin(globals.pins[6], 6);
+
+  return true;
+  */
 }
 
 // Setup server.
@@ -69,7 +72,7 @@ void setup(void){
 
   SPIFFS.begin();
   if (!customInitialization(globals)) {
-    //loadConfig(globals);
+    loadConfig(globals);
   }
   
   globals.pinsInitialized = false;
@@ -118,6 +121,8 @@ void updateSettings() {
   
   if (!globals.pinsInitialized) {
     dhtReaders.clear();
+
+    pinMode(globals.ledPin, OUTPUT);
     
     // Initialize the pins
     int numPins = NUM_PINS;
@@ -129,13 +134,11 @@ void updateSettings() {
       switch (globals.pins[i].type) {
         case PinType_Input_TempSensorDHT11:
           Serial.println(String("Creating DHT11 on pin: ") + (i+1));
-          pinMode(globals.pins[i].pinNumber, INPUT);
           globals.pins[i].data.tempData.failed = 1;
-          dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT11, 16, globals.minSensorIntervalMs), i));
+          dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT11, 13, globals.minSensorIntervalMs), i));
           break;
         case PinType_Input_TempSensorDHT22:
-          Serial.println(String("Creating DHT11 on pin: ") + (i+1));
-          pinMode(globals.pins[i].pinNumber, INPUT);
+          Serial.println(String("Creating DHT22 on pin: ") + (i+1));
           globals.pins[i].data.tempData.failed = 1;
           dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT22, 16, globals.minSensorIntervalMs), i));
           break;
@@ -144,15 +147,17 @@ void updateSettings() {
           pinMode(globals.pins[i].pinNumber, OUTPUT);
           // Initialize pin state based on whatever the previous digital state was.
           // This prevents toggling off then right back on.
+          globals.pins[i].stale = true;
           globals.pins[i].enabled = digitalRead(globals.pins[i].pinNumber);
           break;
         default:
           pinMode(globals.pins[i].pinNumber, OUTPUT);
-          digitalWrite(globals.pins[i].pinNumber, OFF);
+          digitalWrite(globals.pins[i].pinNumber, globals.off);
           break;
       }
     }
-    
+
+    digitalWrite(globals.ledPin, 1);
     globals.pinsInitialized = true;
   }
 }
