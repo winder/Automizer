@@ -7,11 +7,13 @@ Control a bunch of outlets from an ESP8266.
 Using the Arduino IDE and [esp8266/Arduino](https://github.com/esp8266/Arduino) SDK.
 
 Libraries:
+
 * [WifiManager](https://github.com/tzapu/WiFiManager)
 * [NTPClient](https://github.com/arduino-libraries/NTPClient)
 * [Arduino JSON](https://github.com/bblanchon/ArduinoJson)
 
 Data upload:
+
 Files are served from SPIFFS storage, these files are stored in the data directory. To upload the files to your esp8266 you can use the [arduino-esp8266fs-plugin](https://github.com/esp8266/arduino-esp8266fs-plugin).
 
 ### Usage ###
