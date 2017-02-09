@@ -12,20 +12,20 @@ typedef Pin PinArray[NUM_PINS];
 struct ThirdPartyConfig {
   // Thingspeak globals
   bool useThingSpeak = false;
-  unsigned long thingSpeakChannel =  123456; // YOUR THINGSPEAK CHANNEL
-  char thingSpeakKey[KEY_LEN] = "THINGSPEAK-KEY";
+  unsigned long thingSpeakChannel = 211407;
+  char thingSpeakKey[KEY_LEN] = "CP1YIEMC6F0ZRHVL";
   
   // Blynk globals
   bool useBlynk = false;
-  char blynkKey[KEY_LEN] = "BLYNK-KEY";
+  char blynkKey[KEY_LEN] = "d3dc079520c140069eac7ad9221632dd";
   
   // pushinbox globals
   bool usePushingBox = false;
-  char pushingBoxKey[KEY_LEN] = "PUSHINGBOX-KEY";
+  char pushingBoxKey[KEY_LEN] = "v05F7E2CB04AD208";
   
   // Dweet globals
   bool useDweet = false;
-  char dweetThing[KEY_LEN] = "DWEET-THING";
+  char dweetThing[KEY_LEN] = "mynkeo_esp8266";
 
   // For future services
   char reserved[512];
