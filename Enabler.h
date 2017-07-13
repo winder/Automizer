@@ -34,7 +34,10 @@ class Enabler {
             OutputConfig& outConf = pins[i].data.outputConfig;
             bool enabled = checkPin(pins[i], outConf, i, hours, minutes);
             if (pins[i].stale || pins[i].enabled != enabled) {
-              Serial.println(String("ENABLER - Pin ") + i + ", changing to: " + enabled);
+              int bufSize = 6;
+              char buffer[bufSize];
+              snprintf(buffer, bufSize, "%02d:%02d", hours, minutes);
+              Serial.println(String(buffer) + String(" - ENABLER - Pin ") + i + ", changing to: " + enabled);
               digitalWrite(pins[i].pinNumber, enabled ? config.on : config.off);
               pins[i].enabled = enabled;
               pins[i].stale = false;
