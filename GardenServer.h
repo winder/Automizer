@@ -33,7 +33,6 @@ class GardenServer {
     String indexProcessor(const String& key);
     String settingsLinksProcessor(const String& key);
     String settingsProcessor(const String& key);
-    String settingsPinProcessor(const String& key);
     String settingsPinJsonProcessor(const String& key);
     String settingsGlobalsProcessor(const String& key);
     

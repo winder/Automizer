@@ -33,11 +33,6 @@ String GardenServer::settingsProcessor(const String& key) {
   else if (key == "BODY") return getIntegrationSettingsBody(globals);
 }
 
-String GardenServer::settingsPinProcessor(const String& key) {
-  if (key == "TITLE") return "Gardenbot Pin Settings";
-  else if (key == "BODY") return getPinSettingsBody(globals);
-}
-
 String GardenServer::settingsPinJsonProcessor(const String& key) {
   if (key == "TITLE") return "Gardenbot Pin Settings";
   else if (key == "NUM_PINS") return String(NUM_PINS, DEC);
@@ -81,11 +76,7 @@ void GardenServer::handleSettings() {
     saveConfig(globals);
     globals.pinsInitialized = false;
   }
-  else if (server.uri() == "/submitPinSettings") {
-    processPinResults(server, globals);
-    saveConfig(globals);
-    globals.pinsInitialized = false;
-  }
+  // Process json-form pin settings
   else if (server.uri() == "/submitPinSettingsJson") {
     processPinJsonResults(server, globals);
     saveConfig(globals);
@@ -110,20 +101,7 @@ void GardenServer::handleSettings() {
     }
     return;
   }
-
-  // Pin settings (manual - deprecated)
-  if (server.uri() == "/submitPinSettings" || server.uri() == "/pinSettings") {
-    ProcessorCallback cb = BIND_PROCESSOR(settingsPinProcessor);
-    if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
-      Serial.println("SUCCESS");
-      return;
-    } else {
-      Serial.println("FAIL");
-      handleRoot();
-    }
-    return;
-  }
-
+  
   // Pin settings json-forms
   if (server.uri() == "/submitPinSettingsJson" || server.uri() == "/pinSettingsJson") {
     ProcessorCallback cb = BIND_PROCESSOR(settingsPinJsonProcessor);

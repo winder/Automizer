@@ -19,44 +19,7 @@ String getNumber(String name, String description, String value) {
 }
 
 String getSettingsLinksBody() {
-  return "<a href='/integrationSettings'>Integration Settings</a>\n<br>\n<a href='/pinSettings'>Pin Settings</a>";
-}
-
-String getEnumName(PinType type) {
-  switch(type) {
-    default:
-    case PinType_Disabled:              return "Disabled";
-    case PinType_Input_TempSensorDHT11: return "Temperature Input (DHT11)";
-    case PinType_Input_TempSensorDHT22: return "Temperature Input (DHT22)";
-    case PinType_Output_Relay:          return "Relay";                    
-  }
-  return "Disabled";
-}
-
-String getPinCombo(String name, String description, PinType selected) {
-  String field = description + ": ";
-  field += "<select name='" + name + "'>\n";
-  field += "  <option value='disabled'" + String(((selected == PinType_Disabled) ? " selected>":">")) + getEnumName(PinType_Disabled) + "</option>\n";
-  field += "  <option value='dht11'" + String(((selected == PinType_Input_TempSensorDHT11) ? " selected>":">")) + getEnumName(PinType_Input_TempSensorDHT11) + "</option>\n";
-  field += "  <option value='dht22'" + String(((selected == PinType_Input_TempSensorDHT22) ? " selected>":">")) + getEnumName(PinType_Input_TempSensorDHT22) + "</option>\n";
-  field += "  <option value='relay'" + String(((selected == PinType_Output_Relay) ? " selected>":">")) + getEnumName(PinType_Output_Relay) + "</option>\n";
-  field += "</select>\n";
-  return field;
-}
-
-String getPinSettingsBody(const Config& c) {
-  String body = "<form action='/submitPinSettings' method='POST'>";
-  
-  for (int i = 0; i < NUM_PINS; i++) {
-    String pinName = String("D") + (i+1);
-    body += "<br>Pin " + pinName + " Settings<br>\n";
-    body += getString(String(i) + "_name", String("Name"), String(c.pins[i].name)) + "<br>\n";
-    body += getPinCombo(String(i), String("Type"), c.pins[i].type) + "<br>\n";
-  }
-
-  body += "<input type='submit' value='Submit'></form>";
-
-  return body;
+  return "<a href='/settings'>Settings</a>\n<br><a href='/integrationSettings'>Integration Settings</a>\n<br>\n<a href='/pinSettings'>Pin Settings</a>";
 }
 
 PinType stringToPinType(String t) {
@@ -67,31 +30,12 @@ PinType stringToPinType(String t) {
   return PinType_Disabled;
 }
 
-bool processPinResults(ESP8266WebServer& server, Config& c) {
-  bool typeChanged[NUM_PINS];
-
-  // First pass, get global settings and save changed flag.
-  for ( uint8_t i = 0; i < server.args(); i++ ) {
-    int idx = server.argName(i).charAt(0) - '0';
-    if (idx < NUM_PINS && idx > -1) {
-      //Pin& p = &(c.pins[idx]);
-      
-      // pin type
-      if (server.argName(i).length() == 1) {
-        PinType newType = stringToPinType(server.arg(i));
-        if (c.pins[idx].type != newType) {
-          c.pins[idx].type = newType;
-          std::memset(&(c.pins[idx].data), 0, sizeof c.pins[idx].data);
-        }
-      }
-      // pin name
-      if (server.argName(i).endsWith("_name")) {
-        strncpy(c.pins[idx].name, server.arg(i).c_str(), PIN_NAME_LEN);
-      }
-    }
-  }
-
-  // Second pass, pinType advanced settings knowing that the type is now set.
+PinType getTypeFromString(String& s) {
+  if (s == "disabled") return PinType_Disabled;
+  if (s == "dht11")    return PinType_Input_TempSensorDHT11;
+  if (s == "dht22")    return PinType_Input_TempSensorDHT22;
+  if (s == "relay")    return PinType_Output_Relay;
+  return PinType_Disabled;
 }
 
 bool processPinJsonResults(ESP8266WebServer& server, Config& c) {
@@ -203,7 +147,7 @@ bool saveConfig(Config& c) {
   }
 
   /*
-    // Serialize object to file.
+    // Serialize struct to file.
     Serial.println(F("Opened config.conf for UPDATE...."));
     Serial.printf("Start Position =%u \n", configFile.position());
   
@@ -238,7 +182,7 @@ bool loadConfig(Config& c) {
   configFile.close();
   return success;
   /*
-  // Serialize file into struct.
+  // Serialize struct from file.
   Serial.println(F("Opened config.conf"));
   Serial.print(F("CONFIG FILE CONTENTS----------------------"));
   Serial.println();
@@ -493,15 +437,6 @@ bool configToJson(Config& c, char* json, size_t maxSize, bool pinsOnly) {
   if (jsonBuffer.size() > maxSize) return false;
   root.printTo(json, maxSize);
   return true;
-}
-
-
-PinType getTypeFromString(String& s) {
-  if (s == "disabled") return PinType_Disabled;
-  if (s == "dht11")    return PinType_Input_TempSensorDHT11;
-  if (s == "dht22")    return PinType_Input_TempSensorDHT22;
-  if (s == "relay")    return PinType_Output_Relay;
-  return PinType_Disabled;
 }
     
 String pinTypeToString(PinType type) {
