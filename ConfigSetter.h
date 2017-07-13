@@ -8,12 +8,14 @@
 
 String getSettingsLinksBody();
 String getPinSettingsBody(const Config& c);
+String getGlobalSettingsBody(const Config& c);
 
 String getIntegrationSettingsBody(const Config& c);
 
 bool processIntegrationResults(ESP8266WebServer& server, Config& c);
 bool processPinResults(ESP8266WebServer& server, Config& c);
 bool processPinJsonResults(ESP8266WebServer& server, Config& c);
+bool processGlobalSettingsResults(ESP8266WebServer& server, Config& c);
 
 bool loadConfig(Config& c);
 bool saveConfig(Config& c);

@@ -46,7 +46,7 @@ class Enabler {
 
   private:
 
-    bool isEnabled(SensorTriggerType type, bool enabled, float threshhold, float sensorValue) {
+    bool isSensorEnabled(SensorTriggerType type, bool enabled, float threshhold, float sensorValue) {
       switch(type) {
         case SensorTriggerType_Above:
           return sensorValue > threshhold || (enabled && ((sensorValue - TEMP_HYSTERESIS) > threshhold));
@@ -57,14 +57,30 @@ class Enabler {
       }
     }
 
+    // hours = current day hour
+    // minutes = current hour minutes
+    // startMinutes = when to start the schedule each day
+    // stopMinutes = when to stop the schedule each day
+    bool isScheduleEnabled(int curMinutes, int startMinutes, int stopMinutes) {
+      // Off at beginning and end of day.
+      if (startMinutes < stopMinutes) {
+        return startMinutes <= curMinutes && curMinutes < stopMinutes;
+      }
+      // Off in the middle of the day
+      else {
+        return startMinutes <= curMinutes || curMinutes < stopMinutes;
+        }
+    }
+
     bool checkPin(Pin& p, OutputConfig& out, int i, int hours, int minutes) {
+      int curMinutes = hours * 60 + minutes;
       switch(out.trigger) {
         case OutputTrigger_Temperature:
           {
             dht_data& data = pins[out.tempConfig.sensorIndex].data.tempData;
             if (!data.failed) {
-              bool tempEnabled = isEnabled(out.tempConfig.temperatureTrigger, pins[i].enabled, out.tempConfig.temperatureThreshold, data.temp_f);
-              bool humidityEnabled = isEnabled(out.tempConfig.humidityTrigger, pins[i].enabled, out.tempConfig.humidityThreshold, data.humidity);
+              bool tempEnabled = isSensorEnabled(out.tempConfig.temperatureTrigger, pins[i].enabled, out.tempConfig.temperatureThreshold, data.temp_f);
+              bool humidityEnabled = isSensorEnabled(out.tempConfig.humidityTrigger, pins[i].enabled, out.tempConfig.humidityThreshold, data.humidity);
               return tempEnabled || humidityEnabled;
             } else {
               // If the sensor failed the last reading, don't change the pin state.
@@ -74,17 +90,28 @@ class Enabler {
           break;
         case OutputTrigger_Schedule:
           {
-            int curMinutes = hours * 60 + minutes;
             ScheduleTriggerConfig& conf = out.scheduleConfig;
+            return isScheduleEnabled(curMinutes, conf.startMinutes, conf.stopMinutes);
+          }
+          break;
+        case  OutputTrigger_Interval:
+          {
+            IntervalTriggerConfig& conf = out.intervalConfig;
+            bool onSchedule = isScheduleEnabled(curMinutes, conf.startMinutes, conf.stopMinutes);
+
+            // If we're in the interval on period.
+            if (onSchedule) {
+              // Find out how long we've been in the on-period
+              int onFor = curMinutes - conf.startMinutes;
+              if (conf.startMinutes > conf.stopMinutes) {
+                onFor = curMinutes - conf.startMinutes + (60 * 24);
+              }
+
+              int remainder = onFor % (conf.onMinutes + conf.offMinutes);
+              return remainder < conf.onMinutes;
+            }
             
-            // Off at beginning and end of day.
-            if (conf.startMinutes < conf.stopMinutes) {
-              return conf.startMinutes <= curMinutes && curMinutes < conf.stopMinutes;
-            }
-            // Off in the middle of the day
-            else {
-              return conf.startMinutes <= curMinutes || curMinutes < conf.stopMinutes;
-            }
+            return false;
           }
           break;
         case OutputTrigger_Manual:

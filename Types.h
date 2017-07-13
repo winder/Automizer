@@ -31,6 +31,7 @@ enum OutputTrigger {
   OutputTrigger_None,
   OutputTrigger_Temperature,
   OutputTrigger_Schedule,
+  OutputTrigger_Interval,
   OutputTrigger_Manual,
 };
 
@@ -61,6 +62,13 @@ struct ManualTriggerConfig {
   bool enabled;
 };
 
+// Intervals will run 
+struct IntervalTriggerConfig {
+  uint16_t startMinutes;
+  uint16_t stopMinutes;
+  uint16_t onMinutes;
+  uint16_t offMinutes;
+};
 
 struct OutputConfig {
   OutputTrigger trigger;
@@ -68,6 +76,7 @@ struct OutputConfig {
     TemperatureTriggerConfig  tempConfig;
     ScheduleTriggerConfig     scheduleConfig;
     ManualTriggerConfig       manualConfig;
+    IntervalTriggerConfig     intervalConfig;
   };
 };
 

@@ -105,6 +105,33 @@ bool processPinJsonResults(ESP8266WebServer& server, Config& c) {
   }
 }
 
+// Generate HTML form for global settings
+String getGlobalSettingsBody(const Config& c) {
+  String body = "<form action='/submitSettings' method='POST'>";
+
+  body += getString(String("timeZoneOffsetMinutes"), String("Time Zone Offset (minutes)"), String(c.timeZoneOffsetMinutes)) + "<br>\n";
+  body += getString(String("updateInterval"), String("Update Interval (seconds)"), String(c.updateInterval)) + "<br>\n";
+  body += getString(String("uploadInterval"), String("Upload Interval (seconds)"), String(c.uploadInterval)) + "<br>\n";
+
+  body += "<input type='submit' value='Submit'></form>";
+
+  return body;
+}
+
+bool processGlobalSettingsResults(ESP8266WebServer& server, Config& c) {
+  String timeZoneOffsetMinutes = server.arg("timeZoneOffsetMinutes");
+  String updateInterval = server.arg("updateInterval");
+  String uploadInterval = server.arg("uploadInterval");
+
+  c.timeZoneOffsetMinutes = timeZoneOffsetMinutes.toInt();
+  c.updateInterval = updateInterval.toInt();
+  c.uploadInterval = uploadInterval.toInt();
+
+  c.configInitialized = false;
+}
+
+
+// Generate HTML form for integration settings
 String getIntegrationSettingsBody(const Config& c) {
   String body = "<h1>Integration Settings</h1><form action='/submitIntegrationSettings' method='POST'>\n";
   body += getCheckbox("useThingSpeak", "Use ThingSpeak", c.thirdPartyConfig.useThingSpeak) + "<br>\n";
@@ -124,6 +151,7 @@ String getIntegrationSettingsBody(const Config& c) {
   return body;
 }
 
+// Process form results and save them to config
 bool processIntegrationResults(ESP8266WebServer& server, Config& c) {
   // Process thingspeak
   c.thirdPartyConfig.useThingSpeak = strcmp(server.arg("useThingSpeak").c_str(), "") != 0;
@@ -312,6 +340,29 @@ bool loadJsonConfig(const char* s, Config& c) {
                   //Serial.println(stop + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
                 }
                 break;
+              case OutputTrigger_Interval:
+                {
+                  int hours, minutes;
+                  
+                  String start(pinObject["trigger_interval_start"].asString());
+                  hours   = start.substring(0,2).toInt();
+                  minutes = start.substring(3,5).toInt();
+                  p.data.outputConfig.intervalConfig.startMinutes = hours * 60 + minutes;
+                  //Serial.println(start + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
+                  
+                  String stop(pinObject["trigger_interval_stop"].asString());
+                  hours   = stop.substring(0,2).toInt();
+                  minutes = stop.substring(3,5).toInt();
+                  p.data.outputConfig.intervalConfig.stopMinutes = hours * 60 + minutes;
+                  //Serial.println(stop + ", h: " + hours + ", m: " + minutes + ", store: " + (hours * 60 + minutes));
+
+                  String on(pinObject["trigger_interval_on"].asString());
+                  p.data.outputConfig.intervalConfig.onMinutes = on.toInt();
+                  
+                  String off(pinObject["trigger_interval_off"].asString());
+                  p.data.outputConfig.intervalConfig.offMinutes = off.toInt();
+                }
+                break;
               case OutputTrigger_Manual:
                 break;
               case OutputTrigger_Temperature:
@@ -404,6 +455,26 @@ bool configToJson(Config& c, char* json, size_t maxSize, bool pinsOnly) {
               pinObject["trigger_schedule_stop"]  = String(buffer);
             }
             break;
+          case OutputTrigger_Interval:
+            {
+              int bufSize = 6;
+              char buffer[bufSize];
+              
+              int startMinutes = p.data.outputConfig.intervalConfig.startMinutes;
+              snprintf(buffer, bufSize, "%02d:%02d", startMinutes/60, startMinutes%60);
+              pinObject["trigger_interval_start"] = String(buffer);
+              
+              int stopMinutes = p.data.outputConfig.intervalConfig.stopMinutes;
+              snprintf(buffer, bufSize, "%02d:%02d", stopMinutes/60, stopMinutes%60);
+              pinObject["trigger_interval_stop"]  = String(buffer);
+
+              int onMinutes = p.data.outputConfig.intervalConfig.onMinutes;
+              pinObject["trigger_interval_on"] = String(onMinutes);
+              
+              int offMinutes = p.data.outputConfig.intervalConfig.offMinutes;
+              pinObject["trigger_interval_off"] = String(offMinutes);
+            }
+            break;
           case OutputTrigger_Manual:
             break;
           case OutputTrigger_Temperature:
@@ -451,6 +522,7 @@ OutputTrigger getOutputTriggerFromString(String& s) {
   if (s == "none")        return OutputTrigger_None;
   if (s == "environment") return OutputTrigger_Temperature;
   if (s == "schedule")    return OutputTrigger_Schedule;
+  if (s == "interval")    return OutputTrigger_Interval;
   if (s == "manual")      return OutputTrigger_Manual;
   return OutputTrigger_None;
 }
@@ -460,6 +532,7 @@ String outputTriggerToString(OutputTrigger trigger) {
     case OutputTrigger_None:        return "none";
     case OutputTrigger_Temperature: return "environment";
     case OutputTrigger_Schedule:    return "schedule";
+    case OutputTrigger_Interval:    return "interval";
     case OutputTrigger_Manual:      return "manual";
   }
   return "";
@@ -474,9 +547,9 @@ SensorTriggerType getSensorTriggerTypeFromString(String& s) {
 
 String sensorTriggerTypeToString(SensorTriggerType type) {
   switch(type) {
-    case SensorTriggerType_Disabled: return "disabled";
-    case SensorTriggerType_Above: return "above";
-    case SensorTriggerType_Below: return "below";
+    case SensorTriggerType_Disabled:  return "disabled";
+    case SensorTriggerType_Above:     return "above";
+    case SensorTriggerType_Below:     return "below";
   }
   return "";
 }
@@ -503,6 +576,12 @@ void dumpPin(Pin& p, int idx) {
         case OutputTrigger_Schedule:
           Serial.println(String("Start minutes: ") + p.data.outputConfig.scheduleConfig.startMinutes);
           Serial.println(String("Stop minutes:  ") + p.data.outputConfig.scheduleConfig.stopMinutes);
+          break;
+        case OutputTrigger_Interval:
+          Serial.println(String("Start minutes: ") + p.data.outputConfig.intervalConfig.startMinutes);
+          Serial.println(String("Stop minutes:  ") + p.data.outputConfig.intervalConfig.stopMinutes);
+          Serial.println(String("On minutes:    ") + p.data.outputConfig.intervalConfig.onMinutes);
+          Serial.println(String("Off minutes:   ") + p.data.outputConfig.intervalConfig.offMinutes);
           break;
         case OutputTrigger_Manual:
           break;

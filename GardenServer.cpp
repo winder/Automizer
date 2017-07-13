@@ -51,6 +51,11 @@ String GardenServer::settingsPinJsonProcessor(const String& key) {
   }
 }
 
+String GardenServer::settingsGlobalsProcessor(const String& key) {
+  if (key == "TITLE") return "Global settings";
+  else if (key == "BODY") return getGlobalSettingsBody(globals);
+}
+
 String GardenServer::settingsLinksProcessor(const String& key) {
   if (key == "TITLE") return "Gardenbot Settings";
   else if (key == "BODY") return getSettingsLinksBody();
@@ -86,7 +91,14 @@ void GardenServer::handleSettings() {
     saveConfig(globals);
     globals.pinsInitialized = false;
   }
-  
+  // Global settings
+  else if (server.uri() == "/submitSettings") {
+    processGlobalSettingsResults(server, globals);
+    saveConfig(globals);
+    globals.pinsInitialized = false;
+  }
+
+  // Integration services settings.
   if (server.uri() == "/submitIntegrationSettings" || server.uri() == "/integrationSettings") {
     ProcessorCallback cb = BIND_PROCESSOR(settingsProcessor);
     if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
@@ -99,6 +111,7 @@ void GardenServer::handleSettings() {
     return;
   }
 
+  // Pin settings (manual - deprecated)
   if (server.uri() == "/submitPinSettings" || server.uri() == "/pinSettings") {
     ProcessorCallback cb = BIND_PROCESSOR(settingsPinProcessor);
     if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
@@ -111,6 +124,7 @@ void GardenServer::handleSettings() {
     return;
   }
 
+  // Pin settings json-forms
   if (server.uri() == "/submitPinSettingsJson" || server.uri() == "/pinSettingsJson") {
     ProcessorCallback cb = BIND_PROCESSOR(settingsPinJsonProcessor);
     if (ESPTemplateProcessor(server).send(String("/PinSettings.html"), cb)) {
@@ -122,6 +136,20 @@ void GardenServer::handleSettings() {
     }
     return;
   }
+
+  // Global settings
+  if (server.uri() == "/submitSettings" || server.uri() == "/settings") {
+    ProcessorCallback cb = BIND_PROCESSOR(settingsGlobalsProcessor);
+    if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
+      Serial.println("SUCCESS");
+      return;
+    } else {
+      Serial.println("FAIL");
+      handleRoot();
+    }
+    return;
+  }
+  
   ProcessorCallback cb = BIND_PROCESSOR(settingsLinksProcessor);
   if (ESPTemplateProcessor(server).send(String("/settings.html"), cb)) {
     Serial.println("SUCCESS");

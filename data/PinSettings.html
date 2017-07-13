@@ -41,6 +41,7 @@
                   "enum": [
                     "manual",
                     "schedule",
+                    "interval",
                     "environment"
                   ]
                 },
@@ -51,6 +52,22 @@
                 "trigger_schedule_stop": {
                   "type": "string",
                   "title": "Stop Time"
+                },
+                "trigger_interval_start": {
+                  "type": "string",
+                  "title": "Start Time"
+                },
+                "trigger_interval_stop": {
+                  "type": "string",
+                  "title": "Stop Time"
+                },
+                "trigger_interval_on": {
+                  "type": "number",
+                  "title": "ON interval duration (minutes)."
+                },
+                "trigger_interval_off": {
+                  "type": "number",
+                  "title": "OFF interval duration (minutes)."
                 },
                 "trigger_sensor_pin": {
                   "type": "number",
@@ -125,6 +142,7 @@
                         "titleMap": {
                           "manual": "Manual",
                           "schedule": "Time Scheduled",
+                          "interval": "Interval Schedule",
                           "environment": "Temperature / Humidity"
                         },
                         "items": [
@@ -144,6 +162,22 @@
                                 "key": "pins[].trigger_schedule_stop",
                                 "type": "time"
                               }
+                            ]
+                          },
+                          {
+                            "type": "section",
+                            "title": "Author",
+                            "items": [
+                              {
+                                "key": "pins[].trigger_interval_start",
+                                "type": "time"
+                              },
+                              {
+                                "key": "pins[].trigger_interval_stop",
+                                "type": "time"
+                              },
+                              "pins[].trigger_interval_on",
+                              "pins[].trigger_interval_off"
                             ]
                           },
                           {
