@@ -107,9 +107,16 @@ class Enabler {
               // Find out how long we've been in the on-period
               int onFor = curMinutes - conf.startMinutes;
               if (conf.startMinutes > conf.stopMinutes) {
-                onFor = curMinutes - conf.startMinutes + (60 * 24);
+                onFor = (60*24) - conf.startMinutes;
+                
+                if (curMinutes < conf.startMinutes) {
+                  onFor += (60*24) - conf.startMinutes + curMinutes;
+                } else {
+                  onFor = curMinutes - conf.startMinutes;
+                }
               }
 
+              //Serial.println(String("On for: ") + String(onFor));
               int remainder = onFor % (conf.onMinutes + conf.offMinutes);
               return remainder < conf.onMinutes;
             }
