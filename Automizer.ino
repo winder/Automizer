@@ -66,10 +66,26 @@ bool customInitialization(Config& config) {
   */
 }
 
+void disablePins() 
+{
+  Serial.println(String("\nDisabling ") + String(NUM_PINS) + String(" pins"));
+  for (int i = 0; i < NUM_PINS; i++) {
+    pinMode(globals.pins[i].pinNumber, OUTPUT);
+    digitalWrite(globals.pins[i].pinNumber, LOW);
+    Serial.println(String("Disabling pin ") + String(i) + String("/") + String(globals.pins[i].pinNumber));
+  }
+  pinMode(globals.ledPin, OUTPUT);
+  digitalWrite(globals.ledPin, globals.off);
+}
+
 // Setup server.
 void setup(void){
   Serial.begin(115200);
 
+  // Disable pins during startup.
+  disablePins();
+
+  // Load settings from local storage.
   SPIFFS.begin();
   if (!customInitialization(globals)) {
     loadConfig(globals);
@@ -126,11 +142,7 @@ void updateSettings() {
     
     // Initialize the pins
     int numPins = NUM_PINS;
-    for (int i = 0; i < numPins; i++) {
-      if (globals.pins[i].type != PinType_Disabled) {
-        dumpPin(globals.pins[i], i);
-      }
-      
+    for (int i = 0; i < numPins; i++) {      
       switch (globals.pins[i].type) {
         case PinType_Input_TempSensorDHT11:
           Serial.println(String("Creating DHT11 on pin: ") + (i+1));
@@ -151,9 +163,14 @@ void updateSettings() {
           globals.pins[i].enabled = digitalRead(globals.pins[i].pinNumber);
           break;
         default:
-          pinMode(globals.pins[i].pinNumber, OUTPUT);
-          digitalWrite(globals.pins[i].pinNumber, globals.off);
+          //pinMode(globals.pins[i].pinNumber, INPUT);
+          //digitalWrite(globals.pins[i].pinNumber, globals.off);
+          //Serial.println(String("Disabling pin ") + String(i) + String("/") + String(globals.pins[i].pinNumber));
           break;
+      }
+
+      if (globals.pins[i].type != PinType_Disabled) {
+        dumpPin(globals.pins[i], i);
       }
     }
 

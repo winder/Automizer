@@ -91,9 +91,11 @@ union PinData {
 };
 
 struct Pin {
-  Pin(uint8_t num) : pinNumber(num), type(PinType_Disabled) {};
-
+  Pin(uint8_t num) : Pin(num, true) {};
+  Pin(uint8_t num, boolean outputAllowed) : outputAllowed(outputAllowed), pinNumber(num), type(PinType_Disabled) {};
+  
   bool stale = true;
+  bool outputAllowed = true;
   bool enabled = false;
   char name[PIN_NAME_LEN];
   const uint8_t pinNumber;
