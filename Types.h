@@ -17,7 +17,7 @@
 #endif
 
 enum PinType {
-  PinType_Disabled,
+  PinType_None,
   PinType_Input_TempSensorDHT11,
   PinType_Input_TempSensorDHT22,
   PinType_Output_Relay  
@@ -92,11 +92,12 @@ union PinData {
 
 struct Pin {
   Pin(uint8_t num) : Pin(num, true) {};
-  Pin(uint8_t num, boolean outputAllowed) : outputAllowed(outputAllowed), pinNumber(num), type(PinType_Disabled) {};
-  
+  Pin(uint8_t num, boolean outputAllowed) : outputAllowed(outputAllowed), pinNumber(num), type(PinType_None) {};
+
+  bool disable = false;
   bool stale = true;
   bool outputAllowed = true;
-  bool enabled = false;
+  bool outputEnabled = false;
   char name[PIN_NAME_LEN];
   const uint8_t pinNumber;
   PinType type;

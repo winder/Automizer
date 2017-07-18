@@ -31,9 +31,13 @@
                   "type": "string",
                   "title": "Pin name"
                 },
+                "disable": {
+                  "type": "boolean",
+                  "title": "Disable this pin"
+                },
                 "type": {
                   "type": "string",
-                  "enum": [ "disabled", "dht11", "dht22", "relay" ]
+                  "enum": [ "none", "dht11", "dht22", "relay" ]
                 },
                 "trigger": {
                   "type": "string",
@@ -113,11 +117,15 @@
                     "valueInLegend": true
                   },
                   {
+                    "key": "pins[].disable",
+                    "valueInLegend": true
+                  },
+                  {
                     "type": "selectfieldset",
                     "key": "pins[].type",
                     "title": "Make a choice",
                     "titleMap": {
-                      "disabled": "Disabled",
+                      "none": "None",
                       "dht11": "Temperature Input (DHT11)",
                       "dht22": "Temperature Input (DHT22)",
                       "relay": "Relay"

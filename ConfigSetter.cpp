@@ -22,22 +22,6 @@ String getSettingsLinksBody() {
   return "<a href='/settings'>Settings</a>\n<br><a href='/integrationSettings'>Integration Settings</a>\n<br>\n<a href='/pinSettings'>Pin Settings</a>";
 }
 
-PinType stringToPinType(String t) {
-  if (t == "disabled") return PinType_Disabled;
-  if (t == "dht11")    return PinType_Input_TempSensorDHT11;
-  if (t == "dht22")    return PinType_Input_TempSensorDHT22;
-  if (t == "relay")    return PinType_Output_Relay;
-  return PinType_Disabled;
-}
-
-PinType getTypeFromString(String& s) {
-  if (s == "disabled") return PinType_Disabled;
-  if (s == "dht11")    return PinType_Input_TempSensorDHT11;
-  if (s == "dht22")    return PinType_Input_TempSensorDHT22;
-  if (s == "relay")    return PinType_Output_Relay;
-  return PinType_Disabled;
-}
-
 bool processPinJsonResults(ESP8266WebServer& server, Config& c) {
   if (server.hasArg("plain")) {
     Serial.println(String("Data: ") + server.arg("plain").c_str());
@@ -246,6 +230,10 @@ bool loadJsonConfig(const char* s, Config& c) {
       if (pinObject.containsKey("pin_number")) {
         //p.pinNumber = pinObject["pin_number"];
       }
+
+      if (pinObject.containsKey("disable")) {
+        p.disable = pinObject["disable"].as<bool>();
+      }
       
       if (pinObject.containsKey("name")) {
         strncpy(p.name, pinObject["name"], PIN_NAME_LEN);
@@ -375,6 +363,7 @@ bool configToJson(Config& c, char* json, size_t maxSize, bool pinsOnly) {
     pinObject["pin_idx"] = i;
     pinObject["pin_number"] = p.pinNumber;
     pinObject["name"] = p.name;
+    pinObject["disable"] = p.disable;
     pinObject["type"] = pinTypeToString(p.type);
 
     switch (p.type) {
@@ -442,19 +431,24 @@ bool configToJson(Config& c, char* json, size_t maxSize, bool pinsOnly) {
   root.printTo(json, maxSize);
   return true;
 }
+
+// JSON-Form Deserialize
+PinType getTypeFromString(String& s) {
+  if (s == "none")     return PinType_None;
+  if (s == "dht11")    return PinType_Input_TempSensorDHT11;
+  if (s == "dht22")    return PinType_Input_TempSensorDHT22;
+  if (s == "relay")    return PinType_Output_Relay;
+  return PinType_None;
+}
     
 String pinTypeToString(PinType type) {
   switch(type) {
-    case PinType_Disabled:
-      return "disabled";
-    case PinType_Input_TempSensorDHT11:
-      return "dht11";
-    case PinType_Input_TempSensorDHT22:
-      return "dht22";
-    case PinType_Output_Relay:
-      return "relay";
+    case PinType_None:                  return "none";
+    case PinType_Input_TempSensorDHT11: return "dht11";
+    case PinType_Input_TempSensorDHT22: return "dht22";
+    case PinType_Output_Relay:          return "relay";
   }
-  return "";
+  return "none";
 }
 
 OutputTrigger getOutputTriggerFromString(String& s) {
@@ -496,9 +490,10 @@ String sensorTriggerTypeToString(SensorTriggerType type) {
 void dumpPin(Pin& p, int idx) {
   Serial.println("-----------------------------");
   Serial.println(String("Pin ") + idx);
-  Serial.println(String("Name:    ") + p.name);
-  Serial.println(String("Number:  ") + p.pinNumber);
-  Serial.println(String("Type:    ") + pinTypeToString(p.type));
+  Serial.println(String("Name:     ") + p.name);
+  Serial.println(String("Disabled: ") + String(p.disable ? "true" : "false"));
+  Serial.println(String("Number:   ") + p.pinNumber);
+  Serial.println(String("Type:     ") + pinTypeToString(p.type));
   
   switch(p.type) {
     case PinType_Input_TempSensorDHT11:
@@ -533,8 +528,8 @@ void dumpPin(Pin& p, int idx) {
           break;
       }
       break;
-    case PinType_Disabled:
-      Serial.println("Disabled");
+    case PinType_None:
+      Serial.println("No type.");
   }
   Serial.println("-----------------------------");
 }

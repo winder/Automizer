@@ -142,7 +142,7 @@ void updateSettings() {
     
     // Initialize the pins
     int numPins = NUM_PINS;
-    for (int i = 0; i < numPins; i++) {      
+    for (int i = 0; i < numPins; i++) {
       switch (globals.pins[i].type) {
         case PinType_Input_TempSensorDHT11:
           Serial.println(String("Creating DHT11 on pin: ") + (i+1));
@@ -160,7 +160,7 @@ void updateSettings() {
           // Initialize pin state based on whatever the previous digital state was.
           // This prevents toggling off then right back on.
           globals.pins[i].stale = true;
-          globals.pins[i].enabled = digitalRead(globals.pins[i].pinNumber);
+          globals.pins[i].outputEnabled = digitalRead(globals.pins[i].pinNumber);
           break;
         default:
           //pinMode(globals.pins[i].pinNumber, INPUT);
@@ -169,7 +169,7 @@ void updateSettings() {
           break;
       }
 
-      if (globals.pins[i].type != PinType_Disabled) {
+      if (globals.pins[i].type != PinType_None) {
         dumpPin(globals.pins[i], i);
       }
     }
