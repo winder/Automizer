@@ -14,7 +14,6 @@ void GardenServer::setup() {
       server.on("/settings", BIND(handleSettings));
       server.on("/integrationSettings", BIND(handleSettings));
       server.on("/pinSettings", BIND(handleSettings));
-      server.on("/pinSettingsJson", BIND(handleSettings));
       server.on("/dht", BIND(handleSensor));
       server.on("/relay1", BIND(handleToggleRelay1));
       server.on("/argTest1", BIND(handleGenericArgs));
@@ -103,7 +102,7 @@ void GardenServer::handleSettings() {
   }
   
   // Pin settings json-forms
-  if (server.uri() == "/submitPinSettingsJson" || server.uri() == "/pinSettingsJson") {
+  if (server.uri() == "/submitPinSettingsJson" || server.uri() == "/pinSettings") {
     ProcessorCallback cb = BIND_PROCESSOR(settingsPinJsonProcessor);
     if (ESPTemplateProcessor(server).send(String("/PinSettings.html"), cb)) {
       Serial.println("SUCCESS");
