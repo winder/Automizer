@@ -65,6 +65,9 @@ class Enabler {
     // startMinutes = when to start the schedule each day
     // stopMinutes = when to stop the schedule each day
     bool isScheduleEnabled(int curMinutes, int startMinutes, int stopMinutes) {
+      //Serial.println(String("Current minutes: ") + String(curMinutes));
+      //Serial.println(String("  Start minutes: ") + String(startMinutes));
+      //Serial.println(String("   Stop minutes: ") + String(stopMinutes));
       // Off at beginning and end of day.
       if (startMinutes < stopMinutes) {
         return startMinutes <= curMinutes && curMinutes < stopMinutes;
@@ -99,24 +102,26 @@ class Enabler {
           break;
         case  OutputTrigger_Interval:
           {
+            //Serial.println(String("OutputTrigger_Interval"));
             IntervalTriggerConfig& conf = out.intervalConfig;
             bool onSchedule = isScheduleEnabled(curMinutes, conf.startMinutes, conf.stopMinutes);
+            
+            //Serial.println(String("curMinutes: ") + String(curMinutes));
+            //Serial.println(String("conf.startMinutes: ") + String(conf.startMinutes));
+            //Serial.println(String("conf.stopMinutes: ") + String(conf.stopMinutes));
 
             // If we're in the interval on period.
             if (onSchedule) {
               // Find out how long we've been in the on-period
               int onFor = curMinutes - conf.startMinutes;
               if (conf.startMinutes > conf.stopMinutes) {
-                onFor = (60*24) - conf.startMinutes;
-                
                 if (curMinutes < conf.startMinutes) {
-                  onFor += (60*24) - conf.startMinutes + curMinutes;
+                  onFor = (60*24) - conf.startMinutes + curMinutes;
                 } else {
                   onFor = curMinutes - conf.startMinutes;
                 }
               }
 
-              //Serial.println(String("On for: ") + String(onFor));
               int remainder = onFor % (conf.onMinutes + conf.offMinutes);
               return remainder < conf.onMinutes;
             }
