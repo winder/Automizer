@@ -372,6 +372,7 @@ bool configToJson(Config& c, char* json, size_t maxSize, bool pinsOnly) {
         // Nothing else.
         break;
       case PinType_Output_Relay:
+        pinObject["on"] = p.outputEnabled;
         if (p.outputAllowed) {
           pinObject["trigger"] = outputTriggerToString(p.data.outputConfig.trigger);
           switch(p.data.outputConfig.trigger) {
@@ -428,7 +429,7 @@ bool configToJson(Config& c, char* json, size_t maxSize, bool pinsOnly) {
 
   Serial.println(String("Json Buffer Size: ") + jsonBuffer.size());
   if (jsonBuffer.size() > maxSize) return false;
-  root.printTo(json, maxSize);
+  root.prettyPrintTo(json, maxSize);
   return true;
 }
 

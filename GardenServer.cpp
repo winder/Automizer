@@ -14,6 +14,7 @@ void GardenServer::setup() {
       server.on("/settings", BIND(handleSettings));
       server.on("/integrationSettings", BIND(handleSettings));
       server.on("/pinSettings", BIND(handleSettings));
+      server.on("/state", BIND(handleGetStates));
       server.on("/dht", BIND(handleSensor));
       server.on("/relay1", BIND(handleToggleRelay1));
       server.on("/argTest1", BIND(handleGenericArgs));
@@ -137,6 +138,58 @@ void GardenServer::handleSettings() {
   }
 }
 
+void GardenServer::handleGetStates() {
+  /*
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+
+  JsonArray& sensors = root.createNestedArray("sensors");
+  JsonArray& relays = root.createNestedArray("relays");
+  JsonArray& disabled = root.createNestedArray("disabled");
+  
+  int numPins = NUM_PINS;
+  for (int i = 0; i < numPins; i++) {
+    Pin& p = globals.pins[i];
+    switch (globals.pins[i].type) {
+      case PinType_Input_TempSensorDHT11:
+      case PinType_Input_TempSensorDHT22:
+      {
+        JsonObject& pin = sensors.createNestedObject();
+        pin["pin_idx"] = i;
+        pin["pin_number"] = p.pinNumber;
+        pin["name"] = p.name;
+        pin["disabled"] = p.disable;
+        pin["type"] = pinTypeToString(p.type);        
+        break;
+      }
+      case PinType_Output_Relay:
+      {
+        JsonObject& pin = relays.createNestedObject();
+        pin["pin_idx"] = i;
+        pin["pin_number"] = p.pinNumber;
+        pin["name"] = p.name;
+        pin["disabled"] = p.disable;
+        pin["type"] = pinTypeToString(p.type);        
+        pin["enabled"] = globals.pins[i].outputEnabled;
+        break;
+      }
+      default:
+      {
+        JsonObject& pin = disabled.createNestedObject();
+        pin["pin_idx"] = i;
+        pin["pin_number"] = p.pinNumber;
+        pin["disabled"] = p.disable;
+        break;
+      }
+    }
+  }
+
+  char result[jsonBuffer.size() * 2];
+  root.prettyPrintTo(result, sizeof(result));
+  server.send(200, "text/plain", String(result));
+  */
+  server.send(200, "text/plain", settingsPinJsonProcessor("DEFAULTS"));
+}
 
 #define RELAY_1 D5
 bool relay1 = 0;

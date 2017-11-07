@@ -23,6 +23,7 @@ class GardenServer {
 
     void handleRoot();
     void handleSettings();
+    void handleGetStates();
     void handleSensor();
     void handleToggleRelay1();
     void handleGenericArgs();
