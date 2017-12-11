@@ -21,7 +21,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 
 // Map the DhtReader to the pin array index.
-std::vector<std::pair<DhtReader,int>> dhtReaders;
+std::vector<std::pair<DhtReader,Pin*>> dhtReaders;
 GardenServer gardenServer(globals);
 Enabler enabler(globals.pins, NUM_PINS, globals);
 
@@ -122,7 +122,7 @@ void loop(void){
   //Serial.println(timeClient.getFormattedTime());
   enabler.update(timeClient);
   updateSensors(timestamp);
-  //uploadData(timestamp);
+  uploadData(timestamp);
   return;
 }
 
@@ -147,12 +147,12 @@ void updateSettings() {
         case PinType_Input_TempSensorDHT11:
           Serial.println(String("Creating DHT11 on pin: ") + (i+1));
           globals.pins[i].data.tempData.failed = 1;
-          dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT11, 13, globals.minSensorIntervalMs), i));
+          dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT11, 13, globals.minSensorIntervalMs), &(globals.pins[i])));
           break;
         case PinType_Input_TempSensorDHT22:
           Serial.println(String("Creating DHT22 on pin: ") + (i+1));
           globals.pins[i].data.tempData.failed = 1;
-          dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT22, 16, globals.minSensorIntervalMs), i));
+          dhtReaders.push_back(std::make_pair(DhtReader(globals.pins[i].pinNumber, DHT22, 16, globals.minSensorIntervalMs), &(globals.pins[i])));
           break;
         case PinType_Output_Relay:
           Serial.println(String("Creating RELAY on pin: ") + (i+1));
@@ -190,17 +190,26 @@ void uploadData(unsigned long currentSec) {
     //Serial.println(String("curr:     ") + currentSec + "\nprevious: " + previousUploadSec + "\ninterval: " + globals.uploadInterval +"\ndifference: " + (currentSec - previousUploadSec));
     
     bool failed = true;
+    boolean uploadedFirst = false;
     for (int i=0; i < dhtReaders.size(); i++) {
-      std::pair<DhtReader,int>& dht = dhtReaders[i];
+      std::pair<DhtReader,Pin*>& dht = dhtReaders[i];
       // Only stage good data.
-      if (!globals.pins[dht.second].data.tempData.failed) {
+      if (!dht.second->data.tempData.failed) {
         failed = false;
-        String name = String(globals.pins[dht.second].name);
-        integrations.stage(String("temp_") + name, globals.pins[dht.second].data.tempData.temp_f);
-        integrations.stage(String("humidity_") + name, globals.pins[dht.second].data.tempData.humidity);   
+        String name = String(dht.second->name);
+        integrations.stage(String("temp_") + name, dht.second->data.tempData.temp_f);
+        integrations.stage(String("humidity_") + name, dht.second->data.tempData.humidity);
+        //Serial.println(String("temp_") + name + String(" = ") + dht.second->data.tempData.temp_f);
+        //Serial.println(String("humidity_") + name + String(" = ") + dht.second->data.tempData.humidity);
+        if (!uploadedFirst) {
+          integrations.upload(dht.second->data.tempData.temp_f, dht.second->data.tempData.humidity);
+          uploadedFirst = true;
+        }
       }
     }
-    integrations.uploadStagedData();
+
+    // This doesn't do anything yet.
+    //integrations.uploadStagedData();
 
     if (!failed) {
       previousUploadSec = currentSec;
@@ -223,19 +232,18 @@ bool updateSensors(unsigned long currentSec) {
     // Save sensor data to Pin struct
     bool failed = false;
     for (int i=0; i < dhtReaders.size(); i++) {
-      std::pair<DhtReader,int>& dht = dhtReaders[i];
-      globals.pins[dht.second].data.tempData = dht.first.getTemperature();
-      if (globals.pins[dht.second].data.tempData.failed) {
-        Serial.println(String("Failed to get temperature data for pin: ") + dht.second);
+      std::pair<DhtReader,Pin*>& dht = dhtReaders[i];
+      dht.second->data.tempData = dht.first.getTemperature();
+      if (dht.second->data.tempData.failed) {
+        Serial.println(String("Failed to get temperature data for pin idx: ") + pinArrayIndex(dht.second->pinNumber));
         failed = true;
       } else {
-        Serial.print("Pin: "); Serial.println(dht.second);
+        Serial.print("Pin Idx: "); Serial.println(pinArrayIndex(dht.second->pinNumber));
         dht.first.dumpTempCache();
       }
     }
     
     if (!failed) {
-      // integrations.uploadStaged();
       previousUpdateSec = currentSec;
     } else {
       // Don't try more than once a second.
@@ -246,5 +254,14 @@ bool updateSensors(unsigned long currentSec) {
   }
   
   return true;
+}
+
+// Map the hardware pin to an index in the pin array.
+// Returns -1 if invalid
+int pinArrayIndex(int pin) {
+  for (int i = 0; i < NUM_PINS; i++) {
+    if (globals.pins[i].pinNumber == pin) return i;
+  }
+  return -1;
 }
 

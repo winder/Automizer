@@ -25,6 +25,10 @@ class ThirdPartyIntegrations {
         thingSpeakFailedCounter(0)
     {}
 
+    void upload(float &temperature, float &humidity) {
+      upload(String(temperature), String(humidity));
+    }
+
     void upload(String temperature, String humidity) {
       Serial.println("UPLOAD DATA");
 
@@ -36,7 +40,7 @@ class ThirdPartyIntegrations {
 
     void uploadStagedData() {
       Serial.println(String("Staged data size: ") + stagedData.size());
-      // ???
+      //upload
       resetStagedData();
     }
 
