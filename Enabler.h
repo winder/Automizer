@@ -114,7 +114,7 @@ class Enabler {
             if (onSchedule) {
               // Find out how long we've been in the on-period
               int onFor = curMinutes - conf.startMinutes;
-              if (conf.startMinutes > conf.stopMinutes) {
+              if (conf.startMinutes >= conf.stopMinutes) {
                 if (curMinutes < conf.startMinutes) {
                   onFor = (60*24) - conf.startMinutes + curMinutes;
                 } else {
