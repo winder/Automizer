@@ -233,7 +233,7 @@ void GardenServer::handleSensor() {
     switch (p.type) {
       case PinType_Input_TempSensorDHT11:
       case PinType_Input_TempSensorDHT22:
-        if (p.data.tempData.status) {
+        if (p.data.tempData.failed) {
           webString += String("\nFailed to read sensor data on pin ") + i + ":" + String(p.name) + "\n";
         } else {
           webString += String("\n== Pin ") + i + ": " + p.name + " ==\n";

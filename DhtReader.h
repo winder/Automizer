@@ -5,7 +5,6 @@
 
 // Data structures
 struct dht_data {
-  int status;
   boolean failed;
   float temp_f;
   float humidity;
