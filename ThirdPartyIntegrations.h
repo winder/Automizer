@@ -161,9 +161,6 @@ class ThirdPartyIntegrations {
       Blynk.config(conf.blynkKey);
       Serial.println("Not connected to Blynk server, reconnecting"); 
       Blynk.connect(10);  // timeout set to 10 seconds and then continue without Blynk
-      while (Blynk.connect() == false) {
-        // Wait until connected
-      }
     }
   
     if (!Blynk.connected()) {
