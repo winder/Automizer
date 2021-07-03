@@ -21,3 +21,15 @@ Files are served from SPIFFS storage, these files are stored in the data directo
 When first installing, the device will load into access point mode. Connect to "ThingBot" and configure your wifi.
 
 Once wifi is configured the device will boot up. I'm not sure how you're supposed to find the IP address without looking on your router.
+
+When connected you can configure the automation in a web interface:
+![Interface](images/interface.gif)
+
+### Circuit ###
+
+This application toggles logic levels on the GPIO pins, by connecting them to a relays controlling outlets you can control mains electricity.
+
+This is a basic circuit based on an 8 relay module.
+![Circuit](images/circuit.jpg)
+
+
